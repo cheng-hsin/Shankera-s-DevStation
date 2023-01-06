@@ -16,7 +16,12 @@ const LayoutWrapper = ({ children }) => {
             <Link href="/" aria-label={siteMetadata.headerTitle}>
               <div className="flex items-center justify-between">
                 <div className="mr-3">
-                  <Logo />
+                  {/* <Logo /> */}
+                  <img
+                    src="https://freight.cargo.site/t/original/i/b7068e3d3273cb110072d132f2a583e722f6a7a5cf47c365338c554ce971b5e3/Artboard-1.png"
+                    alt="anpanman"
+                    className="h-8 w-8"
+                  />
                 </div>
                 {typeof siteMetadata.headerTitle === 'string' ? (
                   <div className="hidden h-6 text-2xl font-semibold sm:block">
