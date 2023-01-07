@@ -8,7 +8,7 @@ const projectsData = [
   },
   {
     title: 'Game project with Python',
-    description: `The project includes tic-tac-toe and word guessing game. It is made for TV show to.`,
+    description: `The project includes tic-tac-toe and word guessing game. It is made for TV show.`,
     imgSrc: '/static/images/gameproject.png',
     href: 'https://github.com/cheng-hsin/tvprogramme_pygame',
   },
