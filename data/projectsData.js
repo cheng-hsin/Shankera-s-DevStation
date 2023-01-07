@@ -1,11 +1,9 @@
 const projectsData = [
   {
-    title: 'A Search Engine',
-    description: `What if you could look up any information in the world? Webpages, images, videos
-    and more. Google has many features to help you find exactly what you're looking
-    for.`,
-    imgSrc: '/static/images/google.png',
-    href: 'https://www.google.com',
+    title: 'Movie Ticket Booking App',
+    description: `A Movie Ticket Booking App. It is a full-stack application built with Next.js, Prisma, and PostgreSQL.`,
+    imgSrc: '/static/images/cinemarmot.png',
+    href: 'https://gitlab.com/have-a-nice-build/cinemarmot',
   },
   {
     title: 'The Time Machine',
