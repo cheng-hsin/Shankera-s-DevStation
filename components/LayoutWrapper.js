@@ -18,7 +18,7 @@ const LayoutWrapper = ({ children }) => {
                 <div className="mr-3">
                   {/* <Logo /> */}
                   <img
-                    src="https://freight.cargo.site/t/original/i/b7068e3d3273cb110072d132f2a583e722f6a7a5cf47c365338c554ce971b5e3/Artboard-1.png"
+                    src="/static/favicons/apple-touch-icon.png"
                     alt="anpanman"
                     className="h-8 w-8"
                   />
