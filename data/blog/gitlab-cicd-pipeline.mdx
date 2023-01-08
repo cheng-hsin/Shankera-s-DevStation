@@ -1,0 +1,93 @@
+---
+title: 'GitLab CI/CD: Pipeline Job'
+date: 2023-01-08
+lastmod: '2023-01-08'
+tags: ['CI/CD', 'gitLab pipeline job']
+draft: false
+summary: 'Use yml to define the pipeline job'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+# What is CI/CD?
+
+CI/CD can let you build, test, and deploy your code automatically.
+Want to run CI/CD on your project, you have to create a pipeline job which
+is write in yml.
+
+# Build a pipeline job with yml
+
+In your project, you can create a file named `.gitlab-ci.yml` to define your
+pipeline job. The file should be in the root directory of your project.
+
+## Define a job
+
+```yml
+sample-job:
+  script:
+    - echo "Hello World"
+```
+
+## Define a job with image
+
+```yml
+sample-job:
+  image: alpine:latest
+  script:
+    - echo "Hello World"
+```
+
+## Define a job with stages
+
+The stages are used to define the order of the job. The job in the same stage
+will run in parallel.
+
+```yml
+stages:
+  - build
+  - test
+  - deploy
+
+build-job:
+  stage: build
+  script:
+    - echo "Hello World"
+
+test-job:
+  stage: test
+  script:
+    - echo "Hello World"
+
+deploy-job:
+  stage: deploy
+  script:
+    - echo "Hello World"
+```
+
+# Define a job with needs
+
+needs let job depends on other jobs. The job will run after the jobs in the
+needs list are finished.
+
+```yml
+sample-job-1:
+  script:
+    - echo "Hello World"
+
+sample-job-2:
+  needs:
+    - sample-job-1
+  script:
+    - echo "Hello World"
+```
+
+## Define a job with environment variables
+
+```yml
+sample-job:
+  variables:
+    MY_VAR: 'Hello World'
+  script:
+    - echo $MY_VAR
+```
