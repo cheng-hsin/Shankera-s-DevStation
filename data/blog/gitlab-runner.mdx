@@ -1,0 +1,53 @@
+---
+title: 'GitLab runner'
+date: 2023-01-08
+lastmod: '2023-01-08'
+tags: ['CI/CD', 'GitLab runner']
+draft: false
+summary: 'What GitLab runner is and how to use it'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+# Runner & Executor
+
+When the code is pushed to the GitLab repository,
+the GitLab runner will call the executor to execute the job.
+The runner is like a commander, it will assign the job to the executor.
+The executor(docker images) is like a soldier, it will do the job assigned to it by the commander.
+
+<img src="/static/images/gitlab-runner/1.png" alt="GitLab runner" width="800" />
+
+# Where are the GitLab runners?
+
+They are in the `Settings > General > runners`, then you can see the list of runners.
+
+<img src="/static/images/gitlab-runner/2.png" alt="GitLab runner" width="800" />
+
+# Two types of GitLab runners
+
+There are two types of runners, shared runners and private runners.
+Shared runners are the runners that are shared by all projects.
+Private runners are the runners that are only used by the project that they belong to.
+
+# Register a specific runner
+
+If you want to register a specific runner, follow the steps below.
+
+1. Go to the [Install GitLab runner](https://docs.gitlab.com/runner/install/windows.html) page
+   to install gitlab-runner.exe.
+2. Add a new folder `C:\GitLab Runner` folder
+3. Paste the `gitlab-runner.exe` file into the `C:\GitLab Runner` folder
+4. Open the command prompt and cd to the `C:\GitLab Runner` folder
+5. Run the command `gitlab-runner.exe register`
+6. Enter some information about the runner, the information is as follows:
+   - Enter the GitLab instance URL: `https://gitlab.com/`
+   - Enter the registration token: `your registration token`
+   - Enter the description for the runner: `your runner name`
+   - Enter the tags for the runner (comma separated): `your tags`
+   - Enter the executor: `shell`
+   - Enter the default Docker image (e.g. ruby:2.6): `your docker image`
+7. Run the command `gitlab-runner.exe start`
+8. Go to the `Settings > General > runners` page to see if the runner is registered successfully.
+   <img src="/static/images/gitlab-runner/3.png" alt="GitLab runner" width="800" />
