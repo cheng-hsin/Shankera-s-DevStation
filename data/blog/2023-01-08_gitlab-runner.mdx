@@ -64,3 +64,53 @@ If you want to register a specific runner, follow the steps below.
    gitlab-runner.exe run
    ```
    so that the runner can start to work.
+
+# Register a runner on EC2
+
+If you want to register a runner on EC2, follow the steps below.
+
+1. Install Docker on EC2
+   [Install Docker on Amazon Linux 2](https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/)
+
+   - Apply pending updates using the yum command:
+     ```bash
+     sudo yum update -y
+     ```
+   - Search for Docker package:
+     ```bash
+     sudo yum search docker
+     ```
+   - Get version information:
+     ```bash
+     sudo yum info docker
+     ```
+   - Install docker, run:
+     ```bash
+     sudo yum install docker
+     ```
+   - Add group membership for the default ec2-user so you can run all docker commands without using the sudo command:
+     ```bash
+     sudo usermod -a -G docker ec2-user
+     id ec2-user
+     newgrp docker
+     ```
+   - Start Docker service:
+     ```bash
+     sudo systemctl enable docker.service
+     ```
+   - Start the Docker service:
+     ```bash
+     sudo systemctl start docker.service
+     ```
+
+   ## Need docker-compose too? Try any one of the following command:
+
+   ```bash
+   wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)
+   sudo mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
+   sudo chmod -v +x /usr/local/bin/docker-compose
+   ```
+
+2. Install GitLab runner on EC2
+   - [Install GitLab runner on Amazon Linux 2](https://docs.gitlab.com/runner/install/linux-repository.html)
+3. Register the runner
