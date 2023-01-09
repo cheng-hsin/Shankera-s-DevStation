@@ -40,14 +40,27 @@ If you want to register a specific runner, follow the steps below.
 2. Add a new folder `C:\GitLab Runner` folder
 3. Paste the `gitlab-runner.exe` file into the `C:\GitLab Runner` folder
 4. Open the command prompt and cd to the `C:\GitLab Runner` folder
-5. Run the command `gitlab-runner.exe register`
+5. Run the command
+   ```bash
+   gitlab-runner.exe register
+   ```
 6. Enter some information about the runner, the information is as follows:
    - Enter the GitLab instance URL: `https://gitlab.com/`
    - Enter the registration token: `your registration token`
    - Enter the description for the runner: `your runner name`
    - Enter the tags for the runner (comma separated): `your tags`
-   - Enter the executor: `shell`
+   - Enter the executor: `pwsh`
    - Enter the default Docker image (e.g. ruby:2.6): `your docker image`
-7. Run the command `gitlab-runner.exe start`
+7. Run the command
+   ```bash
+   gitlab-runner.exe start
+   ```
 8. Go to the `Settings > General > runners` page to see if the runner is registered successfully.
+
    <img src="/static/images/gitlab-runner/3.png" alt="GitLab runner" width="800" />
+
+9. Run the command
+   ```bash
+   gitlab-runner.exe run
+   ```
+   so that the runner can start to work.
