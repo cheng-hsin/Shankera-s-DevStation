@@ -17,6 +17,9 @@ Table of Contents
 - [Two types of GitLab runners](#two-types-of-gitlab-runners)
 - [Register a specific runner](#register-a-specific-runner)
 - [Register a Docker runner on EC2](#register-a-docker-runner-on-ec2)
+  - [Install Docker on EC2](#install-docker-on-ec2)
+  - [Need `docker-compose` too? Try this following command:](#need-docker-compose-too-try-this-following-command)
+  - [Install GitLab runner on EC2](#install-gitlab-runner-on-ec2)
 
 # Runner & Executor
 
@@ -77,41 +80,40 @@ If you want to register a specific runner, follow the steps below.
 
 If you want to register a runner on EC2, follow the steps below.
 
-1.  Install Docker on EC2
-    [Install Docker on Amazon Linux 2](https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/)
+### Install Docker on EC2 [Install Docker on Amazon Linux 2](https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/)
 
-2.  Apply pending updates using the yum command:
+1.  Apply pending updates using the yum command:
     ```bash
     sudo yum update -y
     ```
-3.  Search for Docker package:
+2.  Search for Docker package:
     ```bash
     sudo yum search docker
     ```
-4.  Get version information:
+3.  Get version information:
     ```bash
     sudo yum info docker
     ```
-5.  Install docker, run:
+4.  Install docker, run:
     ```bash
     sudo yum install docker
     ```
-6.  Add group membership for the default ec2-user so you can run all docker commands without using the sudo command:
+5.  Add group membership for the default ec2-user so you can run all docker commands without using the sudo command:
     ```bash
     sudo usermod -a -G docker ec2-user
     id ec2-user
     newgrp docker
     ```
-7.  Start Docker service:
+6.  Start Docker service:
     ```bash
     sudo systemctl enable docker.service
     ```
-8.  Start the Docker service:
+7.  Start the Docker service:
     ```bash
     sudo systemctl start docker.service
     ```
 
-## Need docker-compose too? Try this following command:
+### Need `docker-compose` too? Try this following command:
 
 ```bash
 wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)
@@ -119,6 +121,20 @@ sudo mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
 sudo chmod -v +x /usr/local/bin/docker-compose
 ```
 
-2. Install GitLab runner on EC2
-   - [Install GitLab runner on Amazon Linux 2](https://docs.gitlab.com/runner/install/linux-repository.html)
-3. Register the runner
+### Install GitLab runner on EC2 [Install GitLab runner on Amazon Linux 2](https://docs.gitlab.com/runner/install/linux-repository.html)
+
+1.  Add the official GitLab repository:
+    ```bash
+    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh" | sudo bash
+    ```
+2.  Install the latest version of GitLab Runner, or skip to the next step to install a specific version:
+    ```bash
+    sudo yum install gitlab-runner
+    ```
+3.  To install a specific version of GitLab Runner:
+    ```bash
+    yum list gitlab-runner --showduplicates | sort -r
+    sudo yum install gitlab-runner-10.0.0-1
+    ```
+4.  Register the runner
+    [Register a specific runner](#register-a-specific-runner)
