@@ -10,6 +10,16 @@ bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
 
+Table of Contents
+
+- [What is CI/CD?](#what-is-cicd)
+- [Build a pipeline job with yml](#build-a-pipeline-job-with-yml)
+  - [Define a job](#define-a-job)
+  - [Define a job with image](#define-a-job-with-image)
+  - [Define a job with stages](#define-a-job-with-stages)
+  - [Define a job with needs](#define-a-job-with-needs)
+  - [Define a job with environment variables](#define-a-job-with-environment-variables)
+
 # What is CI/CD?
 
 CI/CD can let you build, test, and deploy your code automatically.
@@ -65,7 +75,7 @@ deploy-job:
     - echo "Hello World"
 ```
 
-# Define a job with needs
+## Define a job with needs
 
 needs let job depends on other jobs. The job will run after the jobs in the
 needs list are finished.
