@@ -1,0 +1,35 @@
+---
+title: '認識 AWS Region 和 VPC '
+date: 2023-01-11
+lastmod: '2023-01-11'
+tags: ['AWS', 'AWS Region', 'AWS VPC']
+draft: false
+summary: '如果想了解 AWS 資料中心基礎設施，那麼就先來認識 AWS Region、AZ 及 VPC 吧！'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Amazon Web Server (AWS) Region 區域
+
+AWS Region 就是 AWS 建立基礎設施的地方，世界各地都有，目前有 24 個 Region，如下圖。
+
+<img src="/static/images/aws-region-vpc/1.png" alt="aws-region" width="500" />
+
+## Availability Zone (AZ) 可用區域
+
+在每個 Region 內會有多個 Availability Zone (AZ)，AZ 就像一個運算中心，而每個 AZ 上又會有多個 Data center (實體資料中心)，如果跨多個 AZ 分割應用程式，公司可以在發生停電、雷擊、龍捲風、地震等問題時獲得更好的隔離和保護，如下圖。
+
+<img src="/static/images/aws-region-vpc/2.png" alt="aws-az" width="500" />
+
+## Virtual Private Cloud (VPC) 虛擬私有雲
+
+VPC 是一個虛擬的網路區域，可以啟用 AWS 的資源，和我們的網路很像，同時可以利用 AWS 的可伸縮基礎設施。
+
+<img src="/static/images/aws-region-vpc/3.png" alt="aws-vpc" width="500" />
+
+VPC 中有多個 VPC Subnet(子網路)，每個子網路可以擁有自己的 IP 範圍，可以被視為一個獨立的網路。每個子網中可以部署不同的資源，並限制對其他子網的存取，如下圖。
+
+我們要確保這些 Subnets 是否對應到不同的 Availability Zone 中，如果是的話，我們就能達到 High Availability (HA)。
+
+<img src="/static/images/aws-region-vpc/4.png" alt="aws-subnet" width="500" />
