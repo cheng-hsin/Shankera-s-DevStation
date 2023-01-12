@@ -1,5 +1,5 @@
 ---
-title: 'GitLab runner'
+title: 'GitLab CI/CD — runner'
 date: 2023-01-08
 lastmod: '2023-01-08'
 tags: ['CI CD', 'GitLab runner']
@@ -28,13 +28,13 @@ the GitLab runner will call the executor to execute the job.
 The runner is like a commander, it will assign the job to the executor.
 The executor(docker images) is like a soldier, it will do the job assigned to it by the commander.
 
-<img src="/static/images/gitlab-runner/1.png" alt="GitLab runner" width="800" />
+<img src="/static/images/2023-01-08_gitlab-cicd-runner/1.png" alt="GitLab runner" width="800" />
 
 # Where are the GitLab runners?
 
 They are in the `Settings > General > runners`, then you can see the list of runners.
 
-<img src="/static/images/gitlab-runner/2.png" alt="GitLab runner" width="800" />
+<img src="/static/images/2023-01-08_gitlab-cicd-runner/2.png" alt="GitLab runner" width="800" />
 
 # Two types of GitLab runners
 
@@ -68,7 +68,7 @@ If you want to register a specific runner, follow the steps below.
    ```
 8. Go to the `Settings > General > runners` page to see if the runner is registered successfully.
 
-   <img src="/static/images/gitlab-runner/3.png" alt="GitLab runner" width="800" />
+   <img src="/static/images/2023-01-08_gitlab-cicd-runner/3.png" alt="GitLab runner" width="800" />
 
 9. Run the command
    ```bash
@@ -125,7 +125,7 @@ sudo chmod -v +x /usr/local/bin/docker-compose
 
 1.  Add the official GitLab repository:
     ```bash
-    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh" | sudo bash
+    curl -L "https://packages.gitlab.com/install/repositories/runner/2023-01-08_gitlab-cicd-runner/script.rpm.sh" | sudo bash
     ```
 2.  Install the latest version of GitLab Runner, or skip to the next step to install a specific version:
     ```bash
@@ -139,4 +139,9 @@ sudo chmod -v +x /usr/local/bin/docker-compose
 4.  Register the runner
     ```bash
     gitlab-runner register
+    ```
+5.  After registered, you have to start the runner and run it, so that the job can be executed.
+    ```bash
+    gitlab-runner start
+    gitlab-runner run
     ```
