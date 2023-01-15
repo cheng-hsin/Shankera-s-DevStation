@@ -1,0 +1,112 @@
+---
+title: 'GitLab CI/CD — Docker Registry'
+date: 2023-01-15
+lastmod: '2023-01-15'
+tags: ['gitlab', 'cicd', 'Docker Registry']
+draft: false
+summary: 'Docker Registry is a stateless, highly scalable server side application that stores and lets you distribute Docker images.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Introduction
+
+Docker registry is a platform for storing, managing, and distributing Docker images. It allows users to create private image repositories and share them with other users or teams. Docker Hub is the most commonly used public image repository, but there are also third-party options available such as Quay.io and GitLab Container Registry. Using a Docker registry can improve the efficiency of managing and deploying applications.
+
+> Use Dockerfile to build the image. Use .gitlab-ci.yml to build the image and push it to the Docker Registry.
+
+## Push project image to Docker Registry
+
+In this section, we will push the project image to the Docker Registry. We will use the GitLab Container Registry to store the image. The GitLab Container Registry is a private Docker registry that is integrated with GitLab. It allows you to store Docker images and use them in your CI/CD pipelines.
+
+1. Create a "Dockerfile" file in the root directory of your project. This file contains the instructions needed to build the image.
+
+   ```dockerfile
+   FROM denoland/deno:alpine-1.26.0
+
+   # 建立一個資料夾
+   WORKDIR /app
+
+   # 複製檔案到資料夾
+   COPY . /app
+
+   # 設定 port
+   EXPOSE 8000
+
+   # 執行指令
+   RUN deno cache main.ts
+
+   # 把 server 跑起來
+   CMD ["run", "--allow-all", "main.ts"]
+   ```
+
+   Run the following command to build the image.
+
+   ```bash
+   docker build -t [image_name] .
+   ```
+
+2. Create a ".gitlab-ci.yml" file in the root directory of your project. This file contains the instructions needed to build the image.
+
+   ```yaml
+   stages:
+       - testing
+       - build
+       - publish
+
+   run_tests:
+   stage: testing
+   image: denoland/deno:latest
+   script:
+       - deno test
+
+   build_docker_image:
+   stage: build
+   tags:
+       - remote
+   needs:
+       - run_tests
+   before_script:
+       - export IMAGE_VERSION=$(cat deno.json | jq -r .version)
+   script:
+       - docker build -t $CI_REGISTRY_IMAGE:$IMAGE_VERSION . # CLI command (build)
+       - echo "job [build_docker_image] done!!"
+
+   push_to_registry:
+   stage: publish
+   tags:
+       - remote
+   needs:
+       - build_docker_image
+   before_script:
+       - export IMAGE_VERSION=$(cat deno.json | jq -r .version)
+       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY # CLI command (login)
+   script:
+       - docker push $CI_REGISTRY_IMAGE:$IMAGE_VERSION # CLI command (push)
+   ```
+
+   Find the CLI command in `Package and Registry` >>> `Container Registry` in GitLab.
+
+   <img src="/static/images/2023-01-15_gitlab-cicd-docker-registry/1.png" width="800" />
+   <img src="/static/images/2023-01-15_gitlab-cicd-docker-registry/2.png" width="800" />
+
+3. Create a "deno.json" file in the root directory of your project. This file contains the version of the project.
+
+   ```json
+   {
+     "version": "0.1.0"
+   }
+   ```
+
+   Use the following command to get the version of the project.
+
+   ```bash
+   cat deno.json | jq -r .version
+   ```
+
+   In the ".gitlab-ci.yml" file, we use the following command to get the version of the project.
+
+   ```bash
+   export IMAGE_VERSION=$(cat deno.json | jq -r .version)
+   ```
