@@ -1,0 +1,96 @@
+---
+title: '使用 Minikube 操作 Kubernetes'
+date: 2023-01-16
+lastmod: '2023-01-16'
+tags: ['kubernetes', 'minikube']
+draft: false
+summary: '用 Minikube 在本地端模擬 Kubernetes 的環境，來做測試，最後再到雲端上去做真正的部屬。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Table of Contents
+
+- [K8s 設計原理](#k8s-設計原理)
+- [為什麼需要用到 MiniKube？](#為什麼需要用到-minikube)
+- [安裝 Minikube](#安裝-minikube)
+- [建立一個 pod](#建立一個-pod)
+
+## K8s 設計原理
+
+K8s 是用來管理、擴充、自動部屬 container 的軟體，而且它能在不同的機器管理 container，例如不同台電腦、手機，做好資源分配。
+
+![](https://i.imgur.com/r25cTDv.png)
+
+- vertical scalling
+  針對一台電腦升級效能，例如 升級 cpu、記憶體
+- horizontal scaling
+  將資源分配給不同的機器，用來達到 load balance
+
+## 為什麼需要用到 MiniKube？
+
+一般企業要使用 Kubernetes 會在雲端上進行，例如 GKS, EKS, AKS。 在開發階段，我們會使用 MiniKube 在本地端模擬 Kubernetes 的環境，來做測試，最後再到雲端上去做真正的部屬。
+
+雲端部署可以提供更多的管理和擴展性，但在本地部署可以提供更好的控制性和可視性。
+
+## 安裝 Minikube
+
+1. 到 [minikube](https://minikube.sigs.k8s.io/docs/start/)官網，打開 windows powershell 並貼上安裝指令，便會開始安裝
+   ![](https://i.imgur.com/L8rDmCA.png)
+   ![](https://i.imgur.com/GCgTdnz.png)
+
+2. 確保已開啟 docker 應用程式，在 powershell 貼上下列指令啟動集群(cluster)
+
+   ```bash
+   minikube start
+   ```
+
+   可以看到 Docker 產生新的 container
+   ![](https://i.imgur.com/OgnO8FU.png)
+
+3. 在 powershell 打以下指令，開啟儀表板
+
+   ```bash
+   minikube dashboard
+   ```
+
+   這個頁面會自動在網頁打開
+   ![](https://i.imgur.com/AoJ8oUh.png)
+
+   k8s 的儀表板能讓我們看到網站使用狀況，包含 server 收到多少 requests
+
+## 建立一個 pod
+
+新增一個檔案 pod.yaml：
+
+```yaml
+# pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo
+  labels:
+    app: foo
+spec:
+  containers:
+    - name: foo
+      image: mikehsu0618/foo
+      ports:
+        - containerPort: 8080
+```
+
+用下列指令從 dockerhub 拉取測試用的 image：
+
+```bash
+docker pull mikehsu0618/foo
+```
+
+執行 pod.yaml 檔，產生 pod：
+
+```bash
+kubectl apply -f pod.yaml
+```
+
+當 pod 產生後，dashboard 會出現該 pod 的資訊
+![](https://i.imgur.com/qKkV250.png)
