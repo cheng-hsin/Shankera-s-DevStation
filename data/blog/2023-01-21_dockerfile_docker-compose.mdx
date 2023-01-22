@@ -14,16 +14,15 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-
 
 ## Dockerfile
 
-想要把一個專案打包起來這個動作，就等於要產生一個 Docker Image，想產生一個 Docker Image，我們就是需要一個 Dockerfile，因為 Dockerfile 就是為了生成一個 image 用的。
-有了 Dockerfile，我們就可以把專案打包起來變成 Image，並且把它放到 Docker Hub 上面，讓其他人可以使用。
-有了 Image ，Image 就可以生成 Container，而且是可以生成多個 Container。
-
-可以把 Dockerfile 當作是一個腳本，腳本裡面會有一些指令，這些指令就是用來生成 Image 的。
-Image 和 Container 的關係就像是光碟和電腦一樣，光碟是用來安裝電腦的，而且一張光碟可以安裝多台電腦。
+想要把一個專案打包起來這個動作，就等於要產生一個 Docker Image，想產生一個 Docker Image，我們就是需要一個 Dockerfile。
+![](https://i.imgur.com/Vbpw6Aw.png)
+一個 Image 可以起很多個 Container 起來，就好像一個光碟可以安裝多台電腦的作業系統一樣
+![](https://i.imgur.com/BH2OBwM.png)
 
 ## Docker-compose
 
 那麼 Docker-compose 是要幹嘛的呢？簡單來說就是用來管理 Container 的一個腳本。
+![](https://i.imgur.com/r6l7Xjg.png)
 
 定義 Container 與 Container 之間的關係，例如：
 
@@ -38,7 +37,3 @@ Image 和 Container 的關係就像是光碟和電腦一樣，光碟是用來安
 - 環境變量
 - 網絡連接
 - Volume
-
-## 總結
-
-Dockerfile 是用來生成一個 Image，而 Image 是用來生成 Container 的，Docker-compose 是用來管理 Container 的。
