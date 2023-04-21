@@ -1,0 +1,39 @@
+---
+title: 'Dockerfile 和 Docker-compose 的差別'
+date: 2023-01-21
+lastmod: '2023-01-16'
+tags: ['dockerfile', 'docker-compose']
+draft: false
+summary: '常常搞不清楚 Dockerfile 和 Docker-compose，這篇文章就是要來解釋一下它們的差別。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+> 每次看到 Dockerfile 和 Docker-compose 的時候，都會重新想一遍這兩個東西分別是在做什麼的，所以決定紀錄一下它們的 difference。
+
+## Dockerfile
+
+想要把一個專案打包起來這個動作，就等於要產生一個 Docker Image，想產生一個 Docker Image，我們就是需要一個 Dockerfile。
+![](https://i.imgur.com/Vbpw6Aw.png)
+一個 Image 可以起很多個 Container 起來，就好像一個光碟可以安裝多台電腦的作業系統一樣
+![](https://i.imgur.com/BH2OBwM.png)
+
+## Docker-compose
+
+那麼 Docker-compose 是要幹嘛的呢？簡單來說就是用來管理 Container 的一個腳本。
+![](https://i.imgur.com/r6l7Xjg.png)
+
+定義 Container 與 Container 之間的關係，例如：
+
+- 哪個容器依賴於哪個容器
+- 哪個容器需要連接哪個容器
+- 哪些容器需要共用同一個 Volume
+
+多個容器的配置，例如：
+
+- Container 的名稱
+- Image 名稱
+- 環境變量
+- 網絡連接
+- Volume
