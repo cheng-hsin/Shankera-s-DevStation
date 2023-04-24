@@ -1,73 +1,39 @@
 ---
-title: 'Introduction to Terraform'
-date: 2023-04-21
-lastmod: '2023-04-21'
-tags: ['terraform']
+title: 'Dockerfile 和 Docker-compose 的差別'
+date: 2023-01-21
+lastmod: '2023-01-16'
+tags: ['dockerfile', 'docker-compose']
 draft: false
-summary: '來跟大家介紹 Terraform!!'
+summary: '常常搞不清楚 Dockerfile 和 Docker-compose，這篇文章就是要來解釋一下它們的差別。'
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
 
-Terraform 是一個開源的基礎設施自動化工具，它可以幫助使用者自動化建置和管理雲端服務、應用程式、網路和伺服器等基礎設施。Terraform 提供了一個簡單易用的語言來描述基礎設施，並能夠自動化設置和部署這些基礎設施。
+> 每次看到 Dockerfile 和 Docker-compose 的時候，都會重新想一遍這兩個東西分別是在做什麼的，所以決定紀錄一下它們的 difference。
 
-Terraform 的主要優勢是它的可重複性和可擴展性，可以快速地部署和更新基礎設施。此外，Terraform 也支援多種雲端提供商，例如 AWS、Azure 和 Google Cloud Platform 等，使用者可以根據需要快速切換雲端平台。
+## Dockerfile
 
-簡單來說，Terraform 是一個啟機器的工具。
+想要把一個專案打包起來這個動作，就等於要產生一個 Docker Image，想產生一個 Docker Image，我們就是需要一個 Dockerfile。
+![](https://i.imgur.com/Vbpw6Aw.png)
+一個 Image 可以起很多個 Container 起來，就好像一個光碟可以安裝多台電腦的作業系統一樣
+![](https://i.imgur.com/BH2OBwM.png)
 
-## Open Nginx with Terraform
+## Docker-compose
 
-1. 建一個資料夾
-2. 在資料夾中，創建一個名為的文件 main.tf 並將以下 Terraform 配置貼到其中。
+那麼 Docker-compose 是要幹嘛的呢？簡單來說就是用來管理 Container 的一個腳本。
+![](https://i.imgur.com/r6l7Xjg.png)
 
-   ```bash
-   terraform {
-     required_providers {
-       docker = {
-         source  = "kreuzwerker/docker"
-         version = "~> 3.0.1"
-       }
-     }
-   }
+定義 Container 與 Container 之間的關係，例如：
 
-   provider "docker" {
-     host    = "npipe:////.//pipe//docker_engine"
-   }
+- 哪個容器依賴於哪個容器
+- 哪個容器需要連接哪個容器
+- 哪些容器需要共用同一個 Volume
 
-   resource "docker_image" "nginx" {
-     name         = "nginx"
-     keep_locally = false
-   }
+多個容器的配置，例如：
 
-   resource "docker_container" "nginx" {
-     image = docker_image.nginx.image_id
-     name  = "tutorial"
-
-     ports {
-       internal = 80
-       external = 8000
-     }
-   }
-   ```
-
-3. 初始化 Terraform，它會下載一個名為 provider 的擴充套件，讓 Terraform 與 Docker 互動，並開好 Docker Desktop。
-   ```bash
-   terraform init
-   ```
-4. 使用 apply 命令設置 NGINX 伺服器容器。當 Terraform 詢問是否確認時，輸入 yes，然後按下 ENTER 鍵。
-   ```bash
-   terraform apply
-   ```
-5. 透過瀏覽器訪問 localhost:8000。
-   ![](https://i.imgur.com/7ymy8be.png)
-6. 執行 docker ps 命令來檢查 NGINX 容器是否存在。
-   ![](https://i.imgur.com/uLN8Egl.png)
-7. 在 Docker Desktop 能看到有一個新的 container 被啟起來
-   ![](https://i.imgur.com/cvD5Jdd.png)
-
-8. 用 Terraform 把 Container 刪除。
-   ```bash
-   terraform destroy
-   ```
-   ![](https://i.imgur.com/HIq17BM.png)
+- Container 的名稱
+- Image 名稱
+- 環境變量
+- 網絡連接
+- Volume
