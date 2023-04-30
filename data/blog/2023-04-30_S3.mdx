@@ -1,0 +1,43 @@
+---
+title: '初探 AWS S3'
+date: 2023-04-30
+lastmod: '2023-04-24'
+tags: ['aws', 's3']
+draft: false
+summary: 'S3 是幹嘛的哩？'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+### 1. S3 是什麼？
+
+S3 是 Amazon Simple Storage Service 的縮寫，是一個雲端儲存服務，可以用來儲存任何形式的資料，包括文字、圖片、影片、音樂、檔案等等。
+
+### 2. S3 和 RDS 和 Data Lake 的差異
+
+S3 是一個雲端儲存服務，可以儲存任何形式的資料，包括文字、圖片、影片、音樂、檔案等等。
+RDS 是一個雲端資料庫服務，可以儲存結構化的資料，例如：關聯式資料庫。像是 MySQL、PostgreSQL 等等。
+Data Lake 是一個雲端資料服務，可以分析非結構化的資料，例如：文字、圖片、影片、音樂、檔案等等。
+
+### 3. S3 的優點
+
+- 安全性：S3 可以設定存取權限，可以限制使用者存取的權限( Bucket Policy )，例如：只能讀取、只能寫入、只能刪除等等，也可以限制使用者存取的時間( Lifecycle Policy )。
+- 可靠性：S3 會自動備份資料，並且會自動修復損壞的資料。
+- 可擴展性：S3 可以儲存任何形式的資料，並且可以儲存無限量的資料。
+- 簡單性：S3 的 API 簡單易懂，可以快速的建立、讀取、更新、刪除資料。
+
+### 4. S3 的使用方式
+
+S3 可以透過 AWS Console、AWS CLI、AWS SDK 來使用。
+新增一個 Bucket 後，會得到一個網址，可以透過網址來存取資料。
+
+### 5. S3 的使用限制
+
+- 每個 S3 帳號最多可以建立 100 個 Bucket。
+- 每個 Bucket 最多可以儲存 5TB 的資料。
+- 每個 Object 最多可以儲存 5TB 的資料。
+- 每個 Object 最多可以有 10 個 Metadata。
+- 每個 Object 最多可以有 10 個 Tag。
+- 每個 Object 最多可以有 5 個 Access Control List。
+- 每個 Object 最多可以有 1000 個 Bucket Policy。
