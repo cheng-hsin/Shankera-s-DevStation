@@ -16,30 +16,37 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-
 
 ## Terraform 前置作業
 
-### 1.安裝 Terraform。
+1.  安裝 Terraform。
 
-在[此網站](https://developer.hashicorp.com/terraform/downloads?ajs_aid=bb7b6fbb-819f-40e8-bcdf-c0519d6f29c0&product_intent=terraform)中，我們可以找到 Terraform 的安裝檔，Windows 請下載 386 版本。
+    在[此網站](https://developer.hashicorp.com/terraform/downloads?ajs_aid=bb7b6fbb-819f-40e8-bcdf-c0519d6f29c0&product_intent=terraform)中，我們可以找到 Terraform 的安裝檔，Windows 請下載 386 版本。
 
-### 2.安裝 Azure CLI。
+2.  安裝 Azure CLI。
 
-安裝 Azure CLI 是為了讓 Terraform 能夠連接到 Azure。
-在[此網站](https://docs.microsoft.com/zh-tw/cli/azure/install-azure-cli?view=azure-cli-latest&tabs=azure-cli)中，我們可以找到 Azure CLI 的安裝方式。
-其實只要在 Windows 的命令提示字元中輸入以下指令，就可以安裝 Azure CLI。
+        安裝 Azure CLI 是為了讓 Terraform 能夠連接到 Azure。
 
-```bash
-winget install -e --id Microsoft.AzureCLI
-```
+    在[此網站](https://docs.microsoft.com/zh-tw/cli/azure/install-azure-cli?view=azure-cli-latest&tabs=azure-cli)中，我們可以找到 Azure CLI 的安裝方式。
+    其實只要在 Windows 的命令提示字元中輸入以下指令，就可以安裝 Azure CLI。
+
+        ```bash
+        winget install -e --id Microsoft.AzureCLI
+        ```
+
+        輸入以下指令，確認 Azure CLI 是否安裝成功。
+
+        ```bash
+        az --version
+        ```
 
 ## 撰寫 Terraform 檔案。
 
-### 1. 建立一個資料夾。
+1. 建立一個資料夾。
 
-在這個資料夾中，我們會放置 Terraform 的檔案。
+   在這個資料夾中，我們會放置 Terraform 的檔案。
 
-### 2. 建立一些 .tf 檔案。
+2. 建立一些 .tf 檔案。
 
-可以參考[Azure 官網](https://learn.microsoft.com/zh-tw/azure/developer/terraform/configure-azure-virtual-desktop)的範例。
-但是我發現官網的範例有些地方有錯誤，所以我稍微修改了一下，請把我提供的範例放在剛剛新增的資料夾中。
+   可以參考[Azure 官網](https://learn.microsoft.com/zh-tw/azure/developer/terraform/configure-azure-virtual-desktop)的範例。
+   但是我發現官網的範例有些地方有錯誤，所以我稍微修改了一下，請把我提供的範例放在剛剛新增的資料夾中。
 
 main.tf
 
@@ -174,20 +181,38 @@ output "location" {
 
 ```
 
-### 執行 Terraform 指令。
+## 登入 Azure CLI。
 
-在命令提示字元中，切換到剛剛新增的資料夾中，並執行以下指令。
+1. 在命令提示字元中，輸入以下指令。
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+   ```bash
+   az login
+   ```
 
-Terraform 會詢問你是否要執行，輸入 yes 後，Terraform 就會開始執行。
+## 執行 Terraform 指令。
 
-若要刪除剛剛建立的資源，可以執行以下指令。
+1. 在命令提示字元中，切換到剛剛新增的資料夾中，並執行以下指令。
 
-```bash
-terraform destroy
-```
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+   ![](https://i.imgur.com/oujEdgu.png)
+
+   ![](https://i.imgur.com/KvlM4JK.png)
+
+   ![](https://i.imgur.com/olV0fhe.png)
+   ![](https://i.imgur.com/uQqmNNT.png)
+
+   Terraform 會詢問你是否要執行，輸入 yes 後，Terraform 就會開始執行。
+
+   可以看到 Azure VM 已經成功啟用~
+   ![](https://i.imgur.com/CcLHYNi.png)
+
+2. 若要刪除剛剛建立的資源，可以執行以下指令。
+
+   ```bash
+   terraform destroy
+   ```
