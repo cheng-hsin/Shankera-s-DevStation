@@ -1,0 +1,218 @@
+---
+title: '用 Terraform 開一個 Azure VM'
+date: 2023-05-01
+lastmod: '2023-05-01'
+tags: ['terraform', 'azure', 'vm']
+draft: false
+summary: '進階實作 - 如何用 Terraform 開一個 Azure VM'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 前言
+
+在上一篇文章中，我們介紹了如何用 Terraform 開一個 NGINX，這篇文章我們要介紹如何用 Terraform 開一個 Azure VM。
+
+## Terraform 前置作業
+
+1.  安裝 Terraform。
+
+    在[此網站](https://developer.hashicorp.com/terraform/downloads?ajs_aid=bb7b6fbb-819f-40e8-bcdf-c0519d6f29c0&product_intent=terraform)中，我們可以找到 Terraform 的安裝檔，Windows 請下載 386 版本。
+
+2.  安裝 Azure CLI。
+
+        安裝 Azure CLI 是為了讓 Terraform 能夠連接到 Azure。
+
+    在[此網站](https://docs.microsoft.com/zh-tw/cli/azure/install-azure-cli?view=azure-cli-latest&tabs=azure-cli)中，我們可以找到 Azure CLI 的安裝方式。
+    其實只要在 Windows 的命令提示字元中輸入以下指令，就可以安裝 Azure CLI。
+
+        ```bash
+        winget install -e --id Microsoft.AzureCLI
+        ```
+
+        輸入以下指令，確認 Azure CLI 是否安裝成功。
+
+        ```bash
+        az --version
+        ```
+
+## 撰寫 Terraform 檔案。
+
+1. 建立一個資料夾。
+
+   在這個資料夾中，我們會放置 Terraform 的檔案。
+
+2. 建立一些 .tf 檔案。
+
+   可以參考[Azure 官網](https://learn.microsoft.com/zh-tw/azure/developer/terraform/configure-azure-virtual-desktop)的範例。
+   但是我發現官網的範例有些地方有錯誤，所以我稍微修改了一下，請把我提供的範例放在剛剛新增的資料夾中。
+
+main.tf
+
+```terraform
+# Resource group name is output when execution plan is applied.
+resource "azurerm_resource_group" "example" {
+  name     = "example-resources"
+  location = "West Europe"
+}
+
+# Create AVD workspace
+resource "azurerm_virtual_desktop_workspace" "workspace" {
+  name                = var.workspace
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  friendly_name       = "${var.prefix} Workspace"
+  description         = "${var.prefix} Workspace"
+}
+
+# Create AVD host pool
+resource "azurerm_virtual_desktop_host_pool" "hostpool" {
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  name                     = var.hostpool
+  friendly_name            = var.hostpool
+  validate_environment     = true
+  custom_rdp_properties    = "audiocapturemode:i:1;audiomode:i:0;"
+  description              = "${var.prefix} Terraform HostPool"
+  type                     = "Pooled"
+  maximum_sessions_allowed = 16
+  load_balancer_type       = "DepthFirst" #[BreadthFirst DepthFirst]
+}
+
+resource "azurerm_virtual_desktop_host_pool_registration_info" "registrationinfo" {
+  hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
+  expiration_date = "2023-05-02T00:00:00Z"
+}
+
+# Create AVD DAG
+resource "azurerm_virtual_desktop_application_group" "dag" {
+  resource_group_name = azurerm_resource_group.example.name
+  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
+  location            = azurerm_resource_group.example.location
+  type                = "Desktop"
+  name                = "${var.prefix}-dag"
+  friendly_name       = "Desktop AppGroup"
+  description         = "AVD application group"
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool, azurerm_virtual_desktop_workspace.workspace]
+}
+
+# Associate Workspace and DAG
+resource "azurerm_virtual_desktop_workspace_application_group_association" "ws-dag" {
+  application_group_id = azurerm_virtual_desktop_application_group.dag.id
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+}
+```
+
+provider.tf
+
+```terraform
+provider "azurerm" {
+  features {}
+}
+```
+
+variables.tf
+
+```terraform
+variable "resource_group_location" {
+default     = "eastus"
+description = "Location of the resource group."
+}
+
+variable "rg_name" {
+type        = string
+default     = "rg-avd-resources"
+description = "Name of the Resource group in which to deploy service objects"
+}
+
+variable "workspace" {
+type        = string
+description = "Name of the Azure Virtual Desktop workspace"
+default     = "AVD TF Workspace"
+}
+
+variable "hostpool" {
+type        = string
+description = "Name of the Azure Virtual Desktop host pool"
+default     = "AVD-TF-HP"
+}
+
+variable "rfc3339" {
+type        = string
+default     = "2022-03-30T12:43:13Z"
+description = "Registration token expiration"
+}
+
+variable "prefix" {
+type        = string
+default     = "avdtf"
+description = "Prefix of the name of the AVD machine(s)"
+}
+```
+
+output.tf
+
+```terraform
+output "azure_virtual_desktop_compute_resource_group" {
+  description = "Name of the Resource group in which to deploy session host"
+  value       = azurerm_resource_group.example.name
+}
+
+output "azure_virtual_desktop_host_pool" {
+  description = "Name of the Azure Virtual Desktop host pool"
+  value       = azurerm_virtual_desktop_host_pool.hostpool.name
+}
+
+output "azurerm_virtual_desktop_application_group" {
+  description = "Name of the Azure Virtual Desktop DAG"
+  value       = azurerm_virtual_desktop_application_group.dag.name
+}
+
+output "azurerm_virtual_desktop_workspace" {
+  description = "Name of the Azure Virtual Desktop workspace"
+  value       = azurerm_virtual_desktop_workspace.workspace.name
+}
+
+output "location" {
+  description = "The Azure region"
+  value       = azurerm_resource_group.example.location
+}
+
+```
+
+## 登入 Azure CLI。
+
+1. 在命令提示字元中，輸入以下指令。
+
+   ```bash
+   az login
+   ```
+
+## 執行 Terraform 指令。
+
+1. 在命令提示字元中，切換到剛剛新增的資料夾中，並執行以下指令。
+
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+   ![](https://i.imgur.com/oujEdgu.png)
+
+   ![](https://i.imgur.com/KvlM4JK.png)
+
+   ![](https://i.imgur.com/olV0fhe.png)
+   ![](https://i.imgur.com/uQqmNNT.png)
+
+   Terraform 會詢問你是否要執行，輸入 yes 後，Terraform 就會開始執行。
+
+   可以看到 Azure VM 已經成功啟用~
+   ![](https://i.imgur.com/CcLHYNi.png)
+
+2. 若要刪除剛剛建立的資源，可以執行以下指令。
+
+   ```bash
+   terraform destroy
+   ```
