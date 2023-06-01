@@ -1,7 +1,7 @@
 ---
-title: '如何 Clone GitLab 上的 Repo 到 Local 餒？'
+title: '如何 Clone GitLab 上的 Repo 到 Local？'
 date: 2023-04-29
-lastmod: '2023-04-29'
+lastmod: '2023-06-01'
 tags: ['GitLab', 'Git', 'Clone', 'Repo', 'Local']
 draft: false
 summary: 'Having trouble cloning a GitLab repo to local? Here is a quick guide to help you out.'
@@ -16,7 +16,7 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-
 
 ## 問題
 
-在 GitLab 上建立了一個 Repo，並且在 Local 上建立了一個資料夾，想要把 GitLab 上的 Repo Clone 到 Local 上，但是在 Clone 的時候出現了以下的錯誤訊息：
+在 GitLab 上建立了一個 Repo，並且在 Local 上建立了一個資料夾，想要把 GitLab 上的 Repo Clone 到 Local 上，但是在 Clone 的時候出現了以下的錯誤訊息，這個 error 主要是因為沒有身分認證的緣故：
 
 ```bash
 Cloning into 'repo-name'...
@@ -31,7 +31,7 @@ fatal: unable to access 'https://gitlab.com/username/repo-name.git/': The reques
 
 ```bash
 git config --global user.name "your_username"
-git config --global user.email "
+git config --global user.email "your_useremail"
 ```
 
 ### 2. clone repo
@@ -45,10 +45,12 @@ git clone https://gitlab.com/username/repo-name.git
 1. 輸入 Personal Access Token
 2. 輸入 GitLab 的帳號密碼
 
-如果你的 GitLab 帳號是用 Google 登入的話，那麼第二種方式就不適用，所以我們要使用第一種方式。
+如果你的 GitLab 帳號是用 Google 登入的話，那麼第二種方式就不適用，所以我們要使用第一種方式`輸入 Personal Access Token`。
 
 ### 3. 建立 Personal Access Token
 
-在 GitLab 上，點選右上角的頭像，選擇 `Edit Profile`，然後點選左邊的 `Access Tokens`，然後輸入一個名稱，並且勾選 `api`，然後點選 `Create personal access token`，就會產生一組 Personal Access Token，複製下來，並且貼到欄位中，然後點選 `Continue`，就可以完成驗證了。
+在 GitLab 上，點選右上角的頭像，選擇 `Edit Profile`，然後點選左邊的 `Access Tokens`，然後輸入一個名稱，並且勾選 `api`，然後點選 `Create personal access token`，就會產生一組 Personal Access Token。
+
+把 token 複製下來，輸入使用者名稱，並把 token 貼到欄位中，然後點選 `Continue`，就可以完成驗證了。
 
 ![](https://i.imgur.com/CzHioyJ.png)
