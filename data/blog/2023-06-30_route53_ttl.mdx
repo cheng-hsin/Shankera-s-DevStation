@@ -1,0 +1,38 @@
+---
+title: 'Route 53 - TTL'
+date: 2023-05-03
+lastmod: '2023-05-03'
+tags: ['aws', 'route53', 'dns', 'ttl']
+draft: false
+summary: 'Route 53 - TTL'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## TTL 介紹
+
+TTL 是 DNS 記錄的生命週期，當 DNS 記錄被修改時，TTL 會被重置，並且開始倒數，當 TTL 倒數到 0 時，DNS 記錄會被刷新，並且重新取得 DNS 記錄。
+TTL 是 Time To Live 的縮寫，中文翻譯為生命週期。 是為了避免 DNS 記錄被快取，而設計的一個機制。
+
+## TTL 設定
+
+TTL 可以在 Route 53 的 DNS 記錄中設定，預設 TTL 為 300 秒，最小 TTL 為 60 秒，最大 TTL 為 604800 秒。
+
+## TTL 運作
+
+TTL 會在 DNS 記錄被修改時，被重置，並且開始倒數，當 TTL 倒數到 0 時，DNS 記錄會被刷新，並且重新取得 DNS 記錄。
+你可以透過 `dig` 指令來查詢 DNS 記錄的 TTL。
+
+```bash
+dig @ns-xxx.awsdns-xx.com. example.com
+```
+
+他會回傳類似以下的結果
+
+```bash
+;; ANSWER SECTION:
+example.com.        60      IN      A
+```
+
+上面的結果中，`60` 就是 TTL 的秒數，代表 TTL 倒數到 0 時，DNS 記錄會被刷新，並且重新取得 DNS 記錄。
