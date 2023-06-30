@@ -1,0 +1,47 @@
+---
+title: 'CNAME vs Alias'
+date: 2023-06-30
+lastmod: '2023-06-30'
+tags: ['aws', 'route53', 'cname', 'alias']
+draft: false
+summary: 'CNAME vs Alias - DNS（域名系統）的記錄類型'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## CNAME and Alias 的介紹
+
+CNAME 和 Alias 都是 DNS（Domain Name System）的記錄類型，用來將網域名稱對應到 IP 位址。
+通常會用在將網域名稱對應到網站伺服器的 IP 位址，讓瀏覽器可以透過網域名稱來存取網站。
+
+## CNAME vs Alias
+
+CNAME和Alias都是DNS（域名系統）的記錄類型，用於將域名映射到特定的資源或端點。然而，CNAME和Alias記錄之間存在一些差異：
+
+**CNAME（規範名稱）：**
+- CNAME用於為域名或子域名創建別名或替代名稱。
+- 它將域名或子域名指向另一個域名。
+- CNAME記錄不能用於根域名（例如example.com），只能用於子域名（例如www.example.com）。
+- CNAME記錄可用於將域名或子域名映射到不同的域名或子域名，包括外部服務或內容交付網絡（CDN）。
+
+**Alias（別名）：**
+- Alias記錄特定於某些DNS提供商（例如AWS Route 53、Cloudflare），並不屬於官方DNS標準。
+- Alias記錄類似於CNAME記錄，但具有一些優勢，特別是在用於根域名時。
+- Alias記錄可用於根域名（例如example.com）以及子域名。
+- Alias記錄可用於將域名或子域名映射到各種類型的資源，包括其他域名、負載均衡器、AWS資源和CDN。
+- Alias記錄提供更好的性能和可靠性，因為它們在DNS解析層級工作，不需要額外的DNS查詢。
+
+總之，CNAME記錄更廣泛支持，用於為子域名創建別名或替代名稱，而Alias記錄提供類似的功能並帶來額外的好處，特別是用於映射根域名和實現更好的性能。要使用的具體記錄類型取決於您的DNS提供商和DNS配置的要求。
+
+## 在 Route53 ，CNAME 和 Alias 的差異
+
+- CNAME 可以對應到其他網域名稱，但是 Alias 只能對應到 AWS 的資源。
+- Alias 可以用於負載平衡器、CloudFront 分配、S3 網站端點、另一個 Route 53 記錄集、Global Accelerator 端點，或者 Elastic Beanstalk 環境。
+- 如果基礎 ALP 位址變更，Alias 記錄會自動更新，但是 CNAME 記錄不會自動更新。
+- Alias 永遠是 A/AAAA 記錄類型(IPv4/IPv6)，而 CNAME 可以是任何類型。
+- 使用 Alias 時，不能使用 TTL（Time to Live）。
+
+## 參考資料
+
+- [Choosing Between Alias and Non-Alias Records](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html)
