@@ -1,0 +1,38 @@
+---
+title: 'Route 53 - public hosted zones'
+date: 2023-07-02
+lastmod: '2023-07-02'
+tags: ['aws', 'route53', 'public hosted zones']
+draft: false
+summary: 'Working with public hosted zones'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## What is a public hosted zone?
+
+Public Hosted Zones 是用來讓人們透過網際網路訪問您的網站的。它們是 Amazon Route 53（AWS 的域名系統服務）提供的功能。當您在 AWS 上托管您的網站並希望讓大家都能在網上找到您的網站時，就可以用到 Public Hosted Zones。
+
+使用 Public Hosted Zones，您可以在 Route 53 中設定一些跟您的網站有關的設定，比如域名解析、IP 位址等等。當有人在網上輸入您的網站網址時，它們的請求會經過 Route 53 進行解析，然後把他們連接到正確的位置，讓他們能夠順利訪問和瀏覽您的網站。
+
+另外，設定 Public Hosted Zones 時，您需要在第三方註冊機構（Registrar）更新 NS 記錄。NS 記錄是一個指向 Route 53 域名服務器的記錄，這樣所有的網路流量就能夠通過 Route 53 來處理。這意味著當有人輸入您的網站網址時，流量會被導向到 Route 53，然後由 Route 53 來解析並把他們連接到正確的位置。
+
+簡單來說，Public Hosted Zones 就是為了讓人們能夠透過網際網路訪問您的網站。您只需要在 Route 53 中設定相關的設定，然後在註冊機構更新 NS 記錄，就可以確保所有的網路流量都能夠正確地連接到您的網站。
+
+## How to create a public hosted zone?
+
+要在 Route 53 中設定 Public Hosted Zones，您需要先在 AWS 上註冊一個域名。然後，您需要在 Route 53 中設定相關的設定，比如域名解析、IP 位址等等。最後，您需要在註冊機構更新 NS 記錄，這樣所有的網路流量就能夠通過 Route 53 來處理。
+
+## Why use a public hosted zone not a private hosted zone?
+
+使用 Public Hosted Zones 的主要原因是為了公開提供您的網站給網際網路上的使用者。當您希望讓任何人都能夠透過網際網路訪問和瀏覽您的網站時，就需要使用 Public Hosted Zones。
+
+以下是一些使用 Public Hosted Zones 的好處：
+
+1. 全球可訪問性：使用 Public Hosted Zones 可以確保您的網站能夠在全球範圍內被訪問。無論使用者身在何處，只要他們有互聯網連接，就可以透過 DNS 解析將他們的請求路由到正確的位置，使他們能夠訪問您的網站。
+2. 公開性：Public Hosted Zones 允許您將您的網站公開提供給所有人。這對於商業網站或公眾服務網站來說非常重要，因為您希望讓潛在客戶、用戶或訪客能夠方便地找到並使用您的網站。
+3. 網站發佈和營銷：當您使用 Public Hosted Zones 時，您可以在各種線上平台和目錄中註冊和發布您的網站。這樣可以提高您的網站的可見性，吸引更多的訪問者和流量。
+4. 高度可靠性：Amazon Route 53 是一個可靠且高度可用的域名系統服務。使用 Public Hosted Zones 可以利用 AWS 的強大基礎架構和全球分佈的服務器，確保您的網站能夠持續地運行並提供高性能。
+
+總之，使用 Public Hosted Zones 可以使您的網站公開提供給全球範圍內的網際網路使用者，提高可訪問性和可見性，同時享受高度可靠的域名系統服務。這對於任何希望在互聯網上建立存在並吸引用戶的網站來說都是非常重要的。
