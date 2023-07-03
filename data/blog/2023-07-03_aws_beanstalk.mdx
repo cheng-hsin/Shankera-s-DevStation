@@ -1,0 +1,51 @@
+---
+title: 'Amazon Elastic Beanstalk'
+date: 2023-07-03
+lastmod: '2023-07-03'
+tags: ['aws', 'elastic beanstalk']
+draft: false
+summary: '輕鬆部署和管理應用程式 - 透過 Elastic Beanstalk'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Amazon Elastic Beanstalk (EB) 介紹
+
+AWS Elastic Beanstalk 就像是你的個人助理，幫你部署和運行應用程序。它負責處理所有瑣碎的細節，讓你可以專注於構建和優化你的應用程序。
+使用 Elastic Beanstalk，你只需上傳你的程式碼，它會處理其餘的工作。它會設置適當的環境，配置所需的資源，甚至監控你的應用程序的性能。就像有一個專家團隊為你管理應用程序一樣。
+無論你是在建立網站、移動應用還是一個高級的後端服務，Elastic Beanstalk 都能應對自如。它與其他 AWS 服務無縫集成，所以你可以輕鬆整合數據庫、存儲和監控等功能。
+
+總而言之，Elastic Beanstalk 對於開發人員來說是一個絕佳的時間節省工具。它處理了繁瑣的部署和基礎架構管理任務，讓你可以專注於你擅長的事情：創建令用戶愛不釋手的精彩應用程序。
+
+## 設定 AWS Elastic Beanstalk
+
+Finalize personal Q3 OKR based on company OKR
+
+Published on KM1. 創建AWS帳戶：如果你還沒有AWS帳戶，首先需要創建一個。 前往[AWS官方網站]（https://aws.amazon.com/）並按照指示進行註冊。
+
+2. 登錄AWS控制台：使用你的AWS帳戶登錄[AWS控制台]（https://console.aws.amazon.com/）。 這是你管理和設置Elastic Beanstalk的地方。
+
+3. 選擇區域：在控制台的右上角，選擇你希望使用的AWS區域。 區域會影響你的應用程式運行的位置和可用性。
+
+4. 開始創建應用程式：在Elastic Beanstalk的首頁，點擊「創建新應用程式」按鈕。
+
+5. 選擇語言：選擇你的應用程式使用的平臺，例如Python、Node.js、Java等。 根據你的選擇，Elastic Beanstalk會配置適當的運行時環境。
+
+6. 配置環境：設置應用程式的環境。 這包括選擇環境類型（例如Web伺服器環境或Worker環境）、命名環境以及指定環境參數等。
+
+7. 部署應用程式：上傳你的應用程式代碼或容器鏡像。 Elastic Beanstalk會自動部署你的應用程式並設置必要的資源。
+
+8. 監控和調整：使用Elastic Beanstalk的監控和調整功能來監視你的應用程式的性能，並進行必要的調整以滿足需求。
+
+## Elastic Beanstalk 容易和什麼服務搞混？
+
+AWS Elastic Beanstalk 和 AWS ECS （Elastic Container Service） 是容易搞混的兩個服務。
+
+AWS Elastic Beanstalk 是一種託管型的平臺即服務 （PaaS） 解決方案，它簡化了應用程式的部署和管理。 它提供了一個易於使用的介面，可以幫助開發人員快速部署和擴展應用程式，而無需關注底層基礎設施的細節。 Elastic Beanstalk 支援多種程式設計語言和應用程式框架，例如Java、Python、Node.js等。
+
+相比之下，AWS ECS 是一種容器管理服務，它允許你在 AWS 上運行和管理容器化的應用程式。 使用ECS，你可以輕鬆地部署、運行和擴展容器，例如Docker容器。 ECS 提供了更大的靈活性和控制權，適用於需要更高級別的容器管理和配置的場景。
+
+容易搞混的原因是它們在某種程度上都提供了應用程式的部署和擴展功能，但底層的實現方式和使用方式有所不同。 如果你的應用程式是基於容器的，那麼使用 ECS 更為適合。 而如果你希望快速部署和擴展應用程式，並且不需要太多關注底層基礎設施的管理，那麼 Elastic Beanstalk 是一個更好的選擇。
+
+在選擇適合你的服務時，建議仔細閱讀官方文檔，並根據你的需求和應用程式的特性來做出決策。
