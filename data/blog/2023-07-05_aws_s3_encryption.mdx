@@ -1,7 +1,7 @@
 ---
 title: 'AWS S3 Encryption'
 date: 2023-07-05
-lastmod: '2023-07-05'
+lastmod: '2023-07-06'
 tags: ['aws', 's3', 'encryption']
 draft: false
 summary: 'S3 的加密方式'
@@ -32,3 +32,7 @@ S3 提供了兩種主要的加密方式：
 - SSE-KMS: S3 會幫你管理 key，但是你可以自己管理 key
 - SSE-C: 你自己管理 key
 - Client Side Encryption: 你自己管理 key
+
+## Attention
+
+- SSE-C 需在使用 CLI 或 SDK 時自行加解密，S3 並不會幫你處理加解密
