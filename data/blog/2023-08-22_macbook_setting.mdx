@@ -1,0 +1,39 @@
+---
+title: 'Windows to Macbook'
+date: '2023-08-22'
+lastmod: '2023-08-22'
+tags: ['macbook', 'setting']
+draft: false
+summary: 'Macbook setting for development'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 前言
+
+從 Windows 轉換到 Macbook 的開發環境，紀錄一下設定過程。
+
+## Homebrew
+
+通常在 Macbook 上安裝軟體都會使用 Homebrew，所以拿到新的 Macbook 之後，第一件事就是安裝 Homebrew。
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+## Git
+
+Macbook 預設已經安裝 Git，但是版本可能會比較舊，所以可以透過 Homebrew 安裝最新版的 Git。
+
+```bash
+brew install git
+```
+
+## Iterm2
+
+Macbook 預設的終端機是 Terminal，但是我們可以透過 Homebrew 安裝 Iterm2，Iterm2 功能比較多，也比較好用。
+
+```bash
+brew install --cask iterm2
+```
