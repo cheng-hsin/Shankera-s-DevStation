@@ -1,0 +1,52 @@
+---
+title: 'AWS S3 cors'
+date: 2023-07-06
+lastmod: '2023-07-06'
+tags: ['aws', 's3', 'cors']
+draft: false
+summary: 'S3 cors(Cross-Origin Resource Sharing) 跨域設定'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## What is CORS?
+
+CORS 是一種機制，它使用額外的 HTTP 標頭來告訴瀏覽器，讓運行在一個 origin (domain) 上的 Web 應用程式被准許存取來自不同 origin 的遠端資源。這樣就可以實現跨網域資源共享，讓你的網站更加靈活和強大。
+
+## S3 CORS
+
+S3 CORS 設定可以讓你的網站存取 S3 上的資源，例如圖片、影片等等。
+
+## S3 CORS 設定
+
+在 S3 上新增一個 Bucket，並在 Bucket 上點選 Properties，找到 Permissions，點選 Cross-origin resource sharing (CORS)。
+
+新增一個 CORS 設定，並將以下設定貼上。
+`AllowedOrigins` 可以設定為 `*`，代表所有網域都可以存取 S3 上的資源，或是設定為特定的 S3 Bucket 網域。
+
+```json
+[
+    {
+        "AllowedHeaders": [
+            "*"
+        ],
+        "AllowedMethods": [
+            "GET"
+        ],
+        "AllowedOrigins": [
+            "*"
+        ],
+        "ExposeHeaders": []
+    }
+]
+```
+
+
+
+## 參考資料
+
+- [AWS S3 CORS](https://docs.aws.amazon.com/zh_tw/AmazonS3/latest/userguide/cors.html)
+
+
+
