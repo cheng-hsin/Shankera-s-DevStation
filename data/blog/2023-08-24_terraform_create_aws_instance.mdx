@@ -1,0 +1,54 @@
+---
+title: 'Two ways to connect to Windows 2012 R2 (ssh and rdp)'
+date: '2021-08-24'
+lastmod: '2023-08-25'
+tags: ['Windows', 'ssh', 'rdp']
+draft: false
+summary: 'Learn how to connect to Windows 2012 R2 with ssh and rdp'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+---
+
+title: 'Two ways to connect to Windows 2012 R2 (ssh and rdp)'
+date: '2021-08-24'
+lastmod: '2023-08-25'
+tags: ['Windows', 'ssh', 'rdp']
+draft: false
+summary: 'Learn how to connect to Windows 2012 R2 with ssh and rdp'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+
+---
+
+## 前言
+
+Windows 2012 R2 是一個很老的 Windows 版本，但是在某些情況下，還是會需要使用到，例如在某些公司的環境中，還是會使用到這個版本的 Windows。
+AWS 提供了兩種方式可以連線到 Windows 2012 R2，分別是 ssh 和 rdp，這篇文章會介紹這兩種方式。
+
+## ssh
+
+ssh 是一種安全的連線方式，可以透過 ssh 連線到 Windows 2012 R2，但是需要先安裝 OpenSSH Server，安裝方式如下：
+
+## rdp
+
+rdp 是一種遠端桌面連線的方式，可以透過 rdp 連線到 Windows 2012 R2
+
+1. 在 AWS Console 中，找到 Windows 2012 R2 的 instance，並且點選右鍵，選擇 Connect，會如下圖所示：
+
+   ![](https://hackmd.io/_uploads/BJ-ik9vT2.png)
+
+2. 選擇 RDP client，並且下載 RDP 檔案，如下圖所示：
+
+   ![](https://hackmd.io/_uploads/SyO1lqvph.png)
+
+3. 選擇 Key Pair 檔案，進行解密，如下圖所示：
+
+   ![](https://hackmd.io/_uploads/HJ_-g5P63.png)
+
+4. 選擇 RDP 檔案，並且開啟，如下圖所示：
+
+5. 輸入剛剛解密的密碼，並且點選 Yes，如下圖所示：
