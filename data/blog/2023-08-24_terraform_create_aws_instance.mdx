@@ -19,59 +19,57 @@ AWS 提供了兩種方式可以連線到 Windows 2012 R2，分別是 ssh 和 rdp
 
 ssh 是一種安全的連線方式，可以透過 ssh 連線到 Windows 2012 R2，但是需要先安裝 OpenSSH Server，安裝方式如下：
 
-1. 訪問以下站點並下載 OpenSSH。一般在Windows 2012R2上，選擇【OpenSSH-Win64.zip】進行下載。
-  ⇒ https://github.com/PowerShell/Win32-OpenSSH/releases
-  
-2. 	解壓 ZIP 文件並將解壓的文件夾移動到您喜歡的任何位置。此示例顯示如何將其放入 [C:\Program Files\] 中，如下所示。
+1.  訪問以下站點並下載 OpenSSH。一般在 Windows 2012R2 上，選擇【OpenSSH-Win64.zip】進行下載。
+    ⇒ https://github.com/PowerShell/Win32-OpenSSH/releases
 
-    ![](https://hackmd.io/_uploads/r1oDME36n.png)
+2.      解壓 ZIP 文件並將解壓的文件夾移動到您喜歡的任何位置。此示例顯示如何將其放入 [C:\Program Files\] 中，如下所示。
 
-3. 打開【系統屬性】，點擊【環境變量】按鈕。
-    
-    ![](https://hackmd.io/_uploads/r1s9G4n63.png)
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_e52acfbe1d2733f46474070827831dac.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371612&Signature=MK1ShZ4pQbhWQG6pphLVa3lyB6g%3D)
 
-4. 在[系統變量]部分中選擇[路徑]，然後單擊[編輯...]按鈕。
-    
-    ![](https://hackmd.io/_uploads/By92GVhT3.png)
-5. 添加您位於 [Variables value] 部分中的 OpenSSH 文件夾路徑。添加後，關閉[系統屬性]窗口。
+3.  打開【系統屬性】，點擊【環境變量】按鈕。
 
-    ![](https://hackmd.io/_uploads/BkmRM42Tn.png)
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_c1ca93741918f6b5b2f61bbd11847ce8.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371658&Signature=8%2B2pGGLQHiDXzZN52CYgR3N65Jg%3D)
 
-6. 運行 [Powershell] 並移動到您所在的 OpenSSH 文件夾。接下來，運行命令“.\install-sshd.ps1”來安裝 sshd 服務，如下所示。如果顯示成功消息，則安裝成功。(最好自己key，不要複製)
-    
-    ![](https://hackmd.io/_uploads/HJ3JXE2pn.png)
+4.  在[系統變量]部分中選擇[路徑]，然後單擊[編輯...]按鈕。
 
-7. 接下來，生成 SSH 主機密鑰。運行命令“.\ssh-keygen.exe -A”，如下所示。(最好自己key，不要複製)
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_1cbf2cb513c6d85e7e1fd54649dedadf.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371680&Signature=m3fuK%2FzMqC1Atwc1jEZpx%2F40fcw%3D)
 
-    ![](https://hackmd.io/_uploads/H1TZmE2p2.png)
+5.  添加您位於 [Variables value] 部分中的 OpenSSH 文件夾路徑。添加後，關閉[系統屬性]窗口。
 
-8. 安裝sshd就可以了。接下來，打開【服務】並啟動 sshd。並且將[啟動類型]更改為[自動]，如下所示。
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_2573dc1191194b7cd59ebb7d60661ec1.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371695&Signature=5%2FARn%2F5HrNdA0NiWwKlSEoO4xU4%3D)
 
-    ![](https://hackmd.io/_uploads/BJu7XE2Tn.png)
+6.  運行 [Powershell] 並移動到您所在的 OpenSSH 文件夾。接下來，運行命令“.\install-sshd.ps1”來安裝 sshd 服務，如下所示。如果顯示成功消息，則安裝成功。(最好自己 key，不要複製)
 
-9. 如果 Windows 防火牆正在運行，請添加 22/TCP 端口以允許 SSH 連接，如下所示。
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_c8ec74af03e7a822dced96ac09921550.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371818&Signature=86EZSu9C2grzt8m0mfUJFqOIT%2FA%3D)
 
-    ![](https://hackmd.io/_uploads/Sy94mVn6h.png)
+7.  接下來，生成 SSH 主機密鑰。運行命令“.\ssh-keygen.exe -A”，如下所示。(最好自己 key，不要複製)
+
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_ba099405852f0586dac83c9d7e61f2a3.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371830&Signature=PEzP49HPhhQTY%2BEIFUndep6pGDc%3D)
+
+8.  安裝 sshd 就可以了。接下來，打開【服務】並啟動 sshd。並且將[啟動類型]更改為[自動]，如下所示。
+
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_04fd2320ca4bc94e06735f110925e4a8.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371840&Signature=b0s4cA5YV%2BNjkOUgP4rEvOGq238%3D)
+
+9.  如果 Windows 防火牆正在運行，請添加 22/TCP 端口以允許 SSH 連接，如下所示。
+
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_991f0b9855399420f37a95166b14cbce.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371854&Signature=Lu6%2BJhUVH%2F2HlLL6mYfOHX%2FXz1o%3D)
 
 10. 從 windows 連到 aws windows R2，需在 R2 用管理員身分啟用 Powershell 並執行`Start-Service sshd`：
-    ![](https://hackmd.io/_uploads/BJBVV42T2.png)
-    
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_9b9bd4a15395714152205b5c5b73040e.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371869&Signature=QfhU%2FpG7DI9eOxcdzgHbz%2Btm134%3D)
+
     > 設 ssh 為自動啟動 `Set-Service -Name sshd -StartupType 'Automatic'`
+
     > 確認 ssh 服務狀態 `Get-Service sshd`
 
-
 11. 在 windows 本地執行以下指令，並輸入密碼
+
     ```bash
     ssh -i /path/to/your/private-key.pem ec2-user@your-public-ip
     ```
-    ![](https://hackmd.io/_uploads/BkQAwE2Tn.png)
-    
-    ![](https://hackmd.io/_uploads/H1aIu4hT2.png)
 
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_eed98b8932d5665e535bcb3c2029df0b.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371892&Signature=MWGJgr2za2MIgpMucjW908IvQXE%3D)
 
-
-
-    
+    ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_b673a92e6d0891db9d072f3afa36ae66.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371910&Signature=urbTkrMzM6cBVSqEZPCbMU979Z8%3D)
 
 ## rdp
 
@@ -79,19 +77,16 @@ rdp 是一種遠端桌面連線的方式，可以透過 rdp 連線到 Windows 20
 
 1. 在 AWS Console 中，找到 Windows 2012 R2 的 instance，並且點選右鍵，選擇 Connect，會如下圖所示：
 
-    ![](https://hackmd.io/_uploads/BJ-ik9vT2.png)
-
+   ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_b626a265802134a90db1f24b2b32926a.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371932&Signature=n8iLevOCWVWAiVUo%2F38FUvIeDP4%3D)
 
 2. 選擇 RDP client，並且下載 RDP 檔案，如下圖所示：
 
-    ![](https://hackmd.io/_uploads/SyO1lqvph.png)
-
+   ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_acd9b44f467ab9d5c5830e6f77412285.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371952&Signature=qirSnk1NwaTeJ9HM43EpSef60Q8%3D)
 
 3. 選擇 Key Pair 檔案，進行解密，如下圖所示：
 
-    ![](https://hackmd.io/_uploads/HJ_-g5P63.png)
-
+   ![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_645f187dfe7cd41079e7eaa81bad89c8.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1693371983&Signature=Ozw%2FhfW0%2Bp3K1D0f53Dk3B4NQ4I%3D)
 
 4. 執行 RDP 檔案，並且輸入剛剛解密的密碼，並且點選 Yes
 
-5. Done 
+5. Done
