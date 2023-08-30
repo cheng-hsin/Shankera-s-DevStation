@@ -1,27 +1,13 @@
 ---
 title: 'Two ways to connect to Windows 2012 R2 (ssh and rdp)'
-date: '2021-08-24'
-lastmod: '2023-08-25'
+date: '2023-08-24'
+lastmod: '2023-08-30'
 tags: ['Windows', 'ssh', 'rdp']
 draft: false
 summary: 'Learn how to connect to Windows 2012 R2 with ssh and rdp'
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
----
-
----
-
-title: 'Two ways to connect to Windows 2012 R2 (ssh and rdp)'
-date: '2021-08-24'
-lastmod: '2023-08-25'
-tags: ['Windows', 'ssh', 'rdp']
-draft: false
-summary: 'Learn how to connect to Windows 2012 R2 with ssh and rdp'
-layout: PostSimple
-bibliography: references-data.bib
-canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
-
 ---
 
 ## 前言
@@ -33,22 +19,79 @@ AWS 提供了兩種方式可以連線到 Windows 2012 R2，分別是 ssh 和 rdp
 
 ssh 是一種安全的連線方式，可以透過 ssh 連線到 Windows 2012 R2，但是需要先安裝 OpenSSH Server，安裝方式如下：
 
+1. 訪問以下站點並下載 OpenSSH。一般在Windows 2012R2上，選擇【OpenSSH-Win64.zip】進行下載。
+  ⇒ https://github.com/PowerShell/Win32-OpenSSH/releases
+  
+2. 	解壓 ZIP 文件並將解壓的文件夾移動到您喜歡的任何位置。此示例顯示如何將其放入 [C:\Program Files\] 中，如下所示。
+
+    ![](https://hackmd.io/_uploads/r1oDME36n.png)
+
+3. 打開【系統屬性】，點擊【環境變量】按鈕。
+    
+    ![](https://hackmd.io/_uploads/r1s9G4n63.png)
+
+4. 在[系統變量]部分中選擇[路徑]，然後單擊[編輯...]按鈕。
+    
+    ![](https://hackmd.io/_uploads/By92GVhT3.png)
+5. 添加您位於 [Variables value] 部分中的 OpenSSH 文件夾路徑。添加後，關閉[系統屬性]窗口。
+
+    ![](https://hackmd.io/_uploads/BkmRM42Tn.png)
+
+6. 運行 [Powershell] 並移動到您所在的 OpenSSH 文件夾。接下來，運行命令“.\install-sshd.ps1”來安裝 sshd 服務，如下所示。如果顯示成功消息，則安裝成功。(最好自己key，不要複製)
+    
+    ![](https://hackmd.io/_uploads/HJ3JXE2pn.png)
+
+7. 接下來，生成 SSH 主機密鑰。運行命令“.\ssh-keygen.exe -A”，如下所示。(最好自己key，不要複製)
+
+    ![](https://hackmd.io/_uploads/H1TZmE2p2.png)
+
+8. 安裝sshd就可以了。接下來，打開【服務】並啟動 sshd。並且將[啟動類型]更改為[自動]，如下所示。
+
+    ![](https://hackmd.io/_uploads/BJu7XE2Tn.png)
+
+9. 如果 Windows 防火牆正在運行，請添加 22/TCP 端口以允許 SSH 連接，如下所示。
+
+    ![](https://hackmd.io/_uploads/Sy94mVn6h.png)
+
+10. 從 windows 連到 aws windows R2，需在 R2 用管理員身分啟用 Powershell 並執行`Start-Service sshd`：
+    ![](https://hackmd.io/_uploads/BJBVV42T2.png)
+    
+    > 設 ssh 為自動啟動 `Set-Service -Name sshd -StartupType 'Automatic'`
+    > 確認 ssh 服務狀態 `Get-Service sshd`
+
+
+11. 在 windows 本地執行以下指令，並輸入密碼
+    ```bash
+    ssh -i /path/to/your/private-key.pem ec2-user@your-public-ip
+    ```
+    ![](https://hackmd.io/_uploads/BkQAwE2Tn.png)
+    
+    ![](https://hackmd.io/_uploads/H1aIu4hT2.png)
+
+
+
+
+    
+
 ## rdp
 
 rdp 是一種遠端桌面連線的方式，可以透過 rdp 連線到 Windows 2012 R2
 
 1. 在 AWS Console 中，找到 Windows 2012 R2 的 instance，並且點選右鍵，選擇 Connect，會如下圖所示：
 
-   ![](https://hackmd.io/_uploads/BJ-ik9vT2.png)
+    ![](https://hackmd.io/_uploads/BJ-ik9vT2.png)
+
 
 2. 選擇 RDP client，並且下載 RDP 檔案，如下圖所示：
 
-   ![](https://hackmd.io/_uploads/SyO1lqvph.png)
+    ![](https://hackmd.io/_uploads/SyO1lqvph.png)
+
 
 3. 選擇 Key Pair 檔案，進行解密，如下圖所示：
 
-   ![](https://hackmd.io/_uploads/HJ_-g5P63.png)
+    ![](https://hackmd.io/_uploads/HJ_-g5P63.png)
 
-4. 選擇 RDP 檔案，並且開啟，如下圖所示：
 
-5. 輸入剛剛解密的密碼，並且點選 Yes，如下圖所示：
+4. 執行 RDP 檔案，並且輸入剛剛解密的密碼，並且點選 Yes
+
+5. Done 
