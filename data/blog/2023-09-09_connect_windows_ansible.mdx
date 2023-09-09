@@ -1,0 +1,45 @@
+---
+title: 'Connect to Windows 2012 R2 with Ansible'
+date: '2023-09-09'
+lastmod: '2023-09-09'
+tags: ['EC2', 'Windows', 'ansible']
+draft: false
+summary: 'Use ansible to connect to Windows 2012 R2'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 前言
+
+Ansible 現在也支援 Windows 了，但是要注意的是，Ansible 本身是使用 SSH 來連線的，但是 Windows 版本的 Ansible 並不支援 SSH，所以要在 Windows 主機上安裝 WinRM 服務，並且設定好防火牆，才能讓 Ansible 連線。
+
+## 安裝 WinRM、.NET Framework 4.5
+
+通常 Windows 2012 R2 都會預設安裝 WinRM 服務，但是預設是不開啟的，所以要先開啟 WinRM 服務，並且設定好防火牆。
+另外，Ansible 本身是使用 Python 來執行的，所以要先安裝 .NET Framework 4.5 以上的版本。
+
+## 定義 Windows 主機
+
+在 Ansible 的 hosts 檔案中，定義 Windows 主機的 IP 位置，並且設定好連線的帳號與密碼。
+
+```bash
+[windows]
+xx.xx.xx.xx
+
+[windows:vars]
+ansible_user=Administrator
+ansible_password=xxxxxx
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+ansible_port=5985
+```
+
+## 設定防火牆
+
+WinRM 服務預設使用 5985 port，所以要先開啟防火牆的 5985 port。
+在安裝 Ansible 的主機上，執行以下指令，確認是否可以連線到 Windows 主機。
+
+```bash
+ansible windows -m win_ping
+```
