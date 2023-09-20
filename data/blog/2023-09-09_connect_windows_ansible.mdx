@@ -1,7 +1,7 @@
 ---
 title: 'Connect to Windows 2012 R2 with Ansible'
 date: '2023-09-09'
-lastmod: '2023-09-09'
+lastmod: '2023-09-20'
 tags: ['EC2', 'Windows', 'ansible']
 draft: false
 summary: 'Use ansible to connect to Windows 2012 R2'
@@ -19,9 +19,11 @@ Ansible 現在也支援 Windows 了，但是要注意的是，Ansible 本身是�
 通常 Windows 2012 R2 都會預設安裝 WinRM 服務，但是預設是不開啟的，所以要先開啟 WinRM 服務，並且設定好防火牆。
 另外，Ansible 本身是使用 Python 來執行的，所以要先安裝 .NET Framework 4.5 以上的版本。
 
-## 定義 Windows 主機
+## 本地設定(Ubuntu)
 
-在 Ansible 的 hosts 檔案中，定義 Windows 主機的 IP 位置，並且設定好連線的帳號與密碼。
+### 在本地定義目標 Windows 主機
+
+在 /etc/ansible/hosts，定義 Windows 主機的 IP 位置，並且設定好連線的帳號與密碼。
 
 ```bash
 [windows]
@@ -29,15 +31,44 @@ xx.xx.xx.xx
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=xxxxxx
+ansible_password=XXXXXXXXXXXXXXXXXXXXXXXX
 ansible_connection=winrm
 ansible_winrm_server_cert_validation=ignore
 ansible_port=5985
+ansible_winrm_transport=ntlm
+ansible_python_interpreter=C:\Program Files\Python310\python.exe
 ```
+
+### 安裝 pywinrm
+
+Ansible 本身是使用 Python 來執行的，所以要先安裝 pywinrm。
+
+```bash
+pip install pywinrm
+```
+
+## Windows 主機設定
 
 ## 設定防火牆
 
 WinRM 服務預設使用 5985 port，所以要先開啟防火牆的 5985 port。
+在安裝 Ansible 的主機上，執行以下指令，確認是否可以連線到 Windows 主機。
+
+```bash
+netsh advfirewall firewall add rule name="TCP Port 5985" dir=in action=allow protocol=TCP localport=5985
+netsh advfirewall firewall show rule name="TCP Port 5985"
+```
+
+## 開啟 WinRM 服務
+
+在 Windows 主機上，執行以下指令，開啟 WinRM 服務。
+
+```bash
+winrm quickconfig
+```
+
+## 測試連線
+
 在安裝 Ansible 的主機上，執行以下指令，確認是否可以連線到 Windows 主機。
 
 ```bash
