@@ -21,6 +21,38 @@ Ansible 現在也支援 Windows 了，但是要注意的是，Ansible 本身是�
 
 ## 本地設定(Ubuntu)
 
+### 安裝 Python 3.8.10
+
+```bash
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.8
+```
+
+### 安裝 pip
+
+```bash
+sudo apt install python3-pip
+```
+
+### 安裝 Ansible
+
+```bash
+sudo apt update
+sudo apt install software-properties-common
+sudo apt-add-repository --yes --update ppa:ansible/ansible
+sudo apt install ansible
+```
+
+### 安裝 pywinrm
+
+Ansible 本身是使用 Python 來執行的，所以要先安裝 pywinrm。
+
+```bash
+pip install pywinrm
+```
+
 ### 在本地定義目標 Windows 主機
 
 在 /etc/ansible/hosts，定義 Windows 主機的 IP 位置，並且設定好連線的帳號與密碼。
@@ -37,14 +69,6 @@ ansible_winrm_server_cert_validation=ignore
 ansible_port=5985
 ansible_winrm_transport=ntlm
 ansible_python_interpreter=C:\Program Files\Python310\python.exe
-```
-
-### 安裝 pywinrm
-
-Ansible 本身是使用 Python 來執行的，所以要先安裝 pywinrm。
-
-```bash
-pip install pywinrm
 ```
 
 ## Windows 主機設定
