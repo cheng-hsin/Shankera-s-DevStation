@@ -14,11 +14,6 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-
 
 Ansible 現在也支援 Windows 了，但是要注意的是，Ansible 本身是使用 SSH 來連線的，但是 Windows 版本的 Ansible 並不支援 SSH，所以要在 Windows 主機上安裝 WinRM 服務，並且設定好防火牆，才能讓 Ansible 連線。
 
-## 安裝 WinRM、.NET Framework 4.5
-
-通常 Windows 2012 R2 都會預設安裝 WinRM 服務，但是預設是不開啟的，所以要先開啟 WinRM 服務，並且設定好防火牆。
-另外，Ansible 本身是使用 Python 來執行的，所以要先安裝 .NET Framework 4.5 以上的版本。
-
 ## 本地設定(Ubuntu)
 
 ### 安裝 Python 3.8.10
@@ -30,6 +25,8 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt install python3.8
 ```
 
+references: https://www.knowledgehut.com/blog/data-science/install-python-on-ubuntu
+
 ### 安裝 pip
 
 ```bash
@@ -39,10 +36,10 @@ sudo apt install python3-pip
 ### 安裝 Ansible
 
 ```bash
-sudo apt update
-sudo apt install software-properties-common
-sudo apt-add-repository --yes --update ppa:ansible/ansible
-sudo apt install ansible
+sudo apt-get install software-properties-common
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt-get update
+sudo apt-get install ansible
 ```
 
 ### 安裝 pywinrm
@@ -73,6 +70,11 @@ ansible_python_interpreter=C:\Program Files\Python310\python.exe
 
 ## Windows 主機設定
 
+### 安裝 WinRM、.NET Framework 4.5
+
+通常 Windows 2012 R2 都會預設安裝 WinRM 服務，但是預設是不開啟的，所以要先開啟 WinRM 服務，並且設定好防火牆。
+另外，Ansible 本身是使用 Python 來執行的，所以要先安裝 .NET Framework 4.5 以上的版本。
+
 ## 設定防火牆
 
 WinRM 服務預設使用 5985 port，所以要先開啟防火牆的 5985 port。
@@ -90,6 +92,10 @@ netsh advfirewall firewall show rule name="TCP Port 5985"
 ```bash
 winrm quickconfig
 ```
+
+### 安裝 python
+
+Ansible 本身是使用 Python 來執行的，所以要先安裝 Python 3.6 以上的版本，建議安裝 Python 3.8.10 或 3.10。
 
 ## 測試連線
 
