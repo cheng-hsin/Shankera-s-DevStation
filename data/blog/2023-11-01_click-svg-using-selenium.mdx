@@ -1,0 +1,61 @@
+---
+title: 'How to click a element in svg with selenium'
+date: '2023-11-01'
+lastmod: '2023-11-01'
+tags: ['selenium', 'svg']
+draft: false
+summary: 'Sometimes we need to click a element in svg with selenium, but it is not easy to do that. This article will show you how to do that.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Why clicking a element in svg is different from other elements
+
+The reason is that the element in svg is not a html element, it is a svg element. So we can not use the normal way to click it.
+
+## Write a javascript function to click a element in svg
+
+Because it's more easy to transform javascript to python, so we can write a javascript function first.
+For example, we want to click a element in svg, we can write a function like this:
+
+```javascript
+// 找到包含data-test-element="instanceViewer_path_frame_0"的path元素
+var pathElement = document.querySelector('path[data-test-element="instanceViewer_path_frame_0"]')
+
+if (pathElement) {
+  // 創建一個滑鼠點擊事件
+  var clickEvent = new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+  })
+
+  // 觸發點擊事件
+  pathElement.dispatchEvent(clickEvent)
+}
+```
+
+Now we know how to click a element in svg with javascript, we can use it in python.
+
+## How to click a element in svg with selenium ( python )
+
+First we need to find the svg element, then we can use `X-path` to find the element we want to click.
+
+```python
+btn = webdriver_wait.until(EC.element_to_be_clickable((By.XPATH, '//*[local-name()="svg"]//*[@data-test-element="instanceViewer_path_frame_0"]')))
+```
+
+Then we can use the problem-solving by violence method to click the element called `execute_script` instead of `click`.
+
+Like this:
+
+```python
+webdriver_wait._driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click'));", btn)
+```
+
+If your click event has some parameters, you can add them like this:
+
+```python
+webdriver_wait._driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click', {'bubbles' : true, 'cancelable': true, 'view': window}));", btn)
+```
