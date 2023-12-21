@@ -1,0 +1,71 @@
+---
+title: 'SQS（Amazon Simple Queue Service）、SNS（Amazon Simple Notification Service）、Kinesis 和 ActiveMQ'
+date: '2023-12-21'
+lastmod: '2023-12-21'
+tags: ['SQS', 'SNS', 'Kinesis', 'ActiveMQ', 'AWS']
+draft: false
+summary: 'introduced SQS, SNS, Kinesis and ActiveMQ'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## SQS（Amazon Simple Queue Service）：
+
+- **用途：**
+
+  - SQS 是一種完全託管的訊息佇列服務，用於在不同元件之間傳遞訊息，實現解耦。
+  - 適用於需要在不同部分之間非同步傳遞訊息的場景。
+
+- **訊息傳遞模型：**
+  - SQS 提供標準佇列和 FIFO 佇列兩種訊息傳遞模型。
+  - FIFO 佇列保證訊息的精確一次傳遞和嚴格的順序。
+
+## SNS（Amazon Simple Notification Service）：
+
+- **用途：**
+
+  - SNS 用於發布和訂閱模型，支援向多個終端（如 SQS 佇列、HTTP 端點、電子郵件等）廣播訊息。
+  - 適用於需要在多個訂閱者之間共用訊息的場景。
+
+- **訊息傳遞模型：**
+  - 提供發布/訂閱（pub/sub）模型，允許多個訂閱者訂閱相同的主題並接收相同的訊息。
+
+## Kinesis：
+
+- **用途：**
+
+  - Kinesis 用於即時串流資料處理和分析。
+  - 適用於需要處理和分析大量即時數據的場景。
+
+- **資料流處理：**
+  - 資料以串流的形式處理，支援即時的、持續的資料流。
+
+## ActiveMQ：
+
+- **用途：**
+
+  - ActiveMQ 是一個開源的訊息中間件，實作了 JMS（Java Message Service）規格。
+  - 適用於需要在應用程式之間進行非同步通訊的場景。
+
+- **訊息傳遞模型：**
+  - 支援點對點和發布/訂閱兩種訊息傳遞模型。
+
+## 主要區別：
+
+- **託管性：**
+
+  - SQS、SNS 和 Kinesis 由 AWS 完全託管，而 ActiveMQ 需要在自己的環境中部署和管理。
+
+- **適用場景：**
+
+  - SQS 和 SNS 適用於分散式系統中解耦組件的場景。
+  - Kinesis 適用於處理即時串流資料的場景。
+  - ActiveMQ 適用於需要使用 JMS 進行非同步通訊的場景。
+
+- **資料處理模型：**
+  - SQS 和 SNS 提供基於訊息的佇列和發布/訂閱模型。
+  - Kinesis 提供即時串流資料處理模型。
+  - ActiveMQ 支援點對點和發布/訂閱兩種模型。
+
+總體而言，選擇取決於應用程式的特定需求。 如果需要即時串流資料處理，Kinesis 可能更合適；如果需要解耦元件或實作發布/訂閱模型，SQS 和 SNS 是不錯的選擇；而 ActiveMQ 適用於需要使用 JMS 進行非同步通訊的場景。
