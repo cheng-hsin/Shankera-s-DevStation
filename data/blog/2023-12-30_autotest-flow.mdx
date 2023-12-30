@@ -1,0 +1,39 @@
+---
+title: 'Automation test environment with Jenkins, Git, Terraform and Amazon ECR/ECS'
+date: '2023-12-30'
+lastmod: '2023-12-30'
+tags: ['Jenkins', 'Git', 'Terraform', 'Amazon ECR/ECS']
+draft: false
+summary: '簡單紀錄透過 Jenkins、Git、Terraform 和 Amazon ECR/ECS 實現的端對端應用程式部署流程。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 程式碼寫作和儲存
+
+開發人員在終端機或編輯器中進行程式碼撰寫，將程式碼存儲在 Git 版本控制系統中。
+
+## 程式碼評審和合併
+
+完成程式碼後，進行程式碼評審和測試，確保代碼品質。通過 Git 提交將程式碼合併到主要分支中。
+
+## 持續整合和部署 (CI/CD)
+
+Jenkins 持續整合服務自動觸發流程。包括靜態代碼分析、編譯程式碼、執行測試用例以及生成 Docker 映像檔。
+
+## Docker 映像檔推送到 Amazon ECR
+
+CI/CD 過程成功後，將 Docker 映像檔推送到 Amazon Elastic Container Registry (ECR)。
+
+## 使用 Terraform 部署到 AWS
+
+Terraform 根據配置檔案創建和管理 AWS 資源。在這例中，部署 Docker 映像檔到 Amazon ECS 容器服務。
+
+## 驗證和確認
+
+部署完成後，開發人員和使用者手動測試應用程式，確保正常運作。
+
+### 總結
+
+透過 Jenkins、Git、Terraform 和 Amazon ECR/ECS 實現的端對端應用程式部署流程。
