@@ -53,10 +53,11 @@ pip install pywinrm
 ### 在本地定義目標 Windows 主機
 
 在 /etc/ansible/hosts，定義 Windows 主機的 IP 位置，並且設定好連線的帳號與密碼。
+使用 EC2 時，須注意 IP (xx.xx.xx.xx)與管理機的 IP (xx.xx.xx.xx)是否在同一個 VPC，是的話就可以直接使用內網 IP 連線，不是的話就要使用外網 IP 連線。
 
 ```bash
 [windows]
-xx.xx.xx.xx
+xx.xx.xx.xx ansible_port=5985 ansible_connection=winrm ansible_winrm_server_cert_validation=ignore ansible_user=Administrator
 
 [windows:vars]
 ansible_user=Administrator
