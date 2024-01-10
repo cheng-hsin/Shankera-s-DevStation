@@ -1,0 +1,53 @@
+---
+title: 'How to Execute an Ansible Playbook?'
+date: '2024-01-10'
+lastmod: '2024-01-10'
+tags: ['Ansible', 'DevOps']
+draft: false
+summary: 'Ansible is an open-source software provisioning, configuration management, and application-deployment tool. It runs on many Unix-like systems, and can configure both Unix-like systems as well as Microsoft Windows. It includes its own declarative language to describe system configuration. Ansible was written by Michael DeHaan and acquired by Red Hat in 2015. Ansible is agentless, temporarily connecting remotely via SSH or Windows Remote Management (allowing remote PowerShell execution) to do its tasks.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Introduction
+
+Ansible 是一個功能強大的自動化工具，用於設定管理、應用程式部署、任務自動化等。 Ansible Playbook 是一個包含一系列任務和主機配置的文件，用於定義和執行自動化任務。
+
+## Step 1: Install Ansible:
+
+```bash
+sudo apt update
+sudo apt install ansible
+```
+
+## Step 2: Create an Ansible Playbook:
+
+> #### Where to create the Ansible Playbook?
+>
+> Playbook 可以在任何地方創建，但是最好在 Ansible 的安裝目錄中創建，以便在執行 Playbook 時可以輕鬆訪問它。
+>
+> 在 Ubuntu 中，Ansible 的安裝目錄是 `/etc/ansible`。
+>
+> 在 Windows 中，Ansible 的安裝目錄是 `C:\Program Files\Ansible`。
+
+```bash
+vim playbook.yml
+```
+
+```yml
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Install Nginx
+      apt: name=nginx state=latest
+```
+
+## Step 3: Execute the Ansible Playbook:
+
+執行 Ansible Playbook 前，需 cd 到 Playbook 所在的目錄，然後執行以下命令：
+
+```bash
+ansible-playbook playbook.yml
+```
