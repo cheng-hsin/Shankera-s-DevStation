@@ -1,0 +1,56 @@
+---
+title: 'Use Ansible tags to run specific tasks'
+date: '2024-01-11'
+lastmod: '2024-01-11'
+tags: ['Ansible', 'Automation', 'DevOps']
+draft: false
+summary: '
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Introduction
+
+當你的 Ansible Playbook 裡面有很多個 tasks 時，你可能會想要只執行其中的某幾個 tasks，這時候就可以使用 Ansible 的 tags 來達成這個目的。
+
+## How to use tags
+
+在 Ansible Playbook 裡面，你可以在每個 task 裡面加上 tags，例如：
+
+```yaml
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  tags:
+    - nginx
+```
+
+這樣的話，當你執行 Playbook 時，就可以指定要執行哪些 tags，例如：
+
+```bash
+ansible-playbook playbook.yml --tags "nginx"
+```
+
+這樣的話，就只會執行帶有 `nginx` tag 的 task。
+
+## Multiple tags
+
+如果你想要執行多個 tags 的 task，可以用逗號 `,` 來分隔，例如：
+
+```bash
+ansible-playbook playbook.yml --tags "nginx,php"
+```
+
+這樣的話，就會執行帶有 `nginx` 或 `php` tag 的 task。
+
+## Skip tags
+
+如果你想要跳過某些 tags 的 task，可以用 `--skip-tags` 來指定，例如：
+
+```bash
+ansible-playbook playbook.yml --skip-tags "nginx"
+```
+
+這樣的話，就會跳過帶有 `nginx` tag 的 task。
