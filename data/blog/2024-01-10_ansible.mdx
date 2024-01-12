@@ -4,7 +4,7 @@ date: '2024-01-10'
 lastmod: '2024-01-10'
 tags: ['Ansible', 'DevOps']
 draft: false
-summary: 'Ansible is an open-source software provisioning, configuration management, and application-deployment tool. It runs on many Unix-like systems, and can configure both Unix-like systems as well as Microsoft Windows. It includes its own declarative language to describe system configuration. Ansible was written by Michael DeHaan and acquired by Red Hat in 2015. Ansible is agentless, temporarily connecting remotely via SSH or Windows Remote Management (allowing remote PowerShell execution) to do its tasks.'
+summary: 'Two files are required to execute an Ansible Playbook: an Ansible Playbook and an Ansible Inventory file. '
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
@@ -13,6 +13,7 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-
 ## Introduction
 
 Ansible 是一個功能強大的自動化工具，用於設定管理、應用程式部署、任務自動化等。 Ansible Playbook 是一個包含一系列任務和主機配置的文件，用於定義和執行自動化任務。
+Inventory 是一個包含主機名稱或 IP 地址的文件，用於定義 Ansible Playbook 中要管理的主機。
 
 ## Step 1: Install Ansible:
 
@@ -44,10 +45,30 @@ vim playbook.yml
       apt: name=nginx state=latest
 ```
 
-## Step 3: Execute the Ansible Playbook:
+## Step 3: Create an Ansible Inventory File:
 
-執行 Ansible Playbook 前，需 cd 到 Playbook 所在的目錄，然後執行以下命令：
+> #### Where to create the Ansible Inventory File?
+>
+> Inventory 可以在任何地方創建，但是最好在 Ansible 的安裝目錄中創建，以便在執行 Playbook 時可以輕鬆訪問它。
+> hosts 跟 inventory 是類似的，但是 inventory 可以有多個 hosts。
+> 在 Ubuntu 中，Ansible 的安裝目錄是 `/etc/ansible`，裡面有一個 `hosts` 檔案。
+
+```yml
+[windows]
+xx.x.xxx.xx ansible_port=5985 ansible_connection=winrm ansible_winrm_server_cert_validation=ignore ansible_user=Administrator
+
+[windows:vars]
+ansible_user=administrator
+ansible_password=XxxxXXxxXxxxXXXXXXXxxxx
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+ansible_port=5985
+ansible_winrm_transport=ntlm
+ansible_python_interpreter=C:\Program Files\Python38\python.exe
+```
+
+## Step 4: Execute the Ansible Playbook:
 
 ```bash
-ansible-playbook playbook.yml
+ansible-playbook playbook.yml -i inventory.ini
 ```
