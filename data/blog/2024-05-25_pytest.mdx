@@ -1,0 +1,74 @@
+---
+title: 'How to use Pytest to write and run automated tests for web applications'
+date: '2024-05-25'
+lastmod: '2024-05-25'
+tags: ['Pytest', 'Python', 'Testing', 'Automation', 'selenium']
+draft: false
+summary: 'Using Pytest to write and run automated tests for Python applications.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## Introduction
+
+Pytest is a testing framework for Python that makes it easy to write simple and scalable tests. It is widely used in the Python community and has a rich ecosystem of plugins that extend its functionality.
+
+## What is "Class" in Pytest?
+
+We can use the `class` keyword to define a class in Python. A class is a blueprint for creating objects (a particular data structure), providing initial values for state (member variables or attributes), and implementations of behavior (member functions or methods).
+
+```python
+class TestClass:
+    def test_one(self):
+        x = "this"
+        assert 'h' in x
+
+    def test_two(self):
+        x = "hello"
+        assert hasattr(x, 'check')
+```
+
+## How to call functions from a class in Pytest?
+
+To call functions from a class in Pytest, we need to create an instance of the class and then call the functions on that instance.
+
+```python
+class TestClass:
+    def test_one(self):
+        x = "this"
+        assert 'h' in x
+
+    def test_two(self):
+        x = "hello"
+        assert hasattr(x, 'check')
+
+def test_class():
+    test = TestClass()
+    test.test_one()
+    test.test_two()
+```
+
+## How to run Pytest?
+
+To run Pytest, we need to install the `pytest` package and then run the `pytest` command in the terminal.
+
+```bash
+pip install pytest
+pytest
+```
+
+## what is `fixture` in Pytest?
+
+A fixture is a function that provides a fixed baseline upon which tests can be run. Fixtures are used to initialize objects, set up the environment, and clean up after the test.
+
+### Explain `function`, `class`, `module`, and `session` scopes in Pytest.
+
+- `function`: The fixture is run once for each test function.
+- `class`: The fixture is run once for each test class.
+- `module`: The fixture is run once for each test module.
+- `session`: The fixture is run once for the entire test session.
+
+## Conclusion
+
+In this article, we have learned how to use Pytest to write and run automated tests for Python applications. Pytest is a powerful testing framework that makes it easy to write simple and scalable tests. It has a rich ecosystem of plugins that extend its functionality and make it easy to integrate with other tools and libraries.
