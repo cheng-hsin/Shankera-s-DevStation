@@ -1,0 +1,94 @@
+---
+title: 'What is Helm in Kubernetes?'
+date: '2024-06-06'
+lastmod: '2024-06-06'
+tags: ['Kubernetes', 'Helm', 'DevOps']
+draft: false
+summary: 'Helm is a package manager for Kubernetes that helps you define, install, and upgrade applications on a Kubernetes cluster.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+# Kubernetes 和 Helm 的區別
+
+在 Kubernetes 和 Helm 之間，**Kubernetes** 是主要的管理系統，而 **Helm** 是一個用來輔助 Kubernetes 管理應用程序的工具。讓我們詳細了解它們各自的角色和功能。
+
+## Kubernetes
+
+**Kubernetes** 是一個容器編排平台，它負責管理和運行容器化的應用程序。它的主要功能包括：
+
+1. **部署和運行應用程序**：
+
+   - 管理應用程序的生命週期，確保它們在集群中正確運行。
+
+2. **自動化擴展**：
+
+   - 根據負載自動擴展或縮減應用程序的副本數量。
+
+3. **滾動更新和回滾**：
+
+   - 在不中斷服務的情況下，逐步更新應用程序，並在需要時回滾到之前的版本。
+
+4. **自動恢復**：
+
+   - 監控應用程序的狀態並在發生故障時自動重啟或替換失敗的容器。
+
+5. **服務發現和負載均衡**：
+   - 為應用程序提供自動的服務發現和內部的負載均衡。
+
+## Helm
+
+**Helm** 是 Kubernetes 的包管理器，它使得在 Kubernetes 上部署和管理應用程序變得更加簡單和高效。它的主要功能包括：
+
+1. **簡化部署**：
+
+   - 使用 Helm Charts 將複雜的應用程序配置打包成一個簡單的單元，可以輕鬆部署。
+
+2. **版本控制**：
+
+   - 管理應用程序的不同版本，支持升級和回滾。
+
+3. **配置管理**：
+
+   - 通過 `values.yaml` 文件管理應用程序的配置，並在部署時注入這些配置。
+
+4. **重用和分享**：
+   - Helm Charts 可以重用，並且可以在公共或私有的 Chart Repository 中分享。
+
+## 比喻
+
+1. **Kubernetes 是主要的管理系統**：
+   - 想像 Kubernetes 是一個大型圖書館管理系統，負責管理和運行整個圖書館的日常運營和維護。
+2. **Helm 是輔助管理工具**：
+   - Helm 是這個圖書館管理系統的輔助工具，幫助圖書館員更高效地管理和分發書籍（應用程序）。
+
+## 具體運作方式
+
+1. **使用 Kubernetes**：
+
+   - 直接在 Kubernetes 上創建和管理應用程序資源（如 Deployment、Service 等）。
+   - 例如，使用 `kubectl` 命令：
+     ```sh
+     kubectl create deployment myapp --image=myimage
+     kubectl expose deployment myapp --type=LoadBalancer --port=80
+     ```
+
+2. **使用 Helm**：
+   - 使用 Helm Charts 打包應用程序的所有資源和配置，然後通過 Helm 安裝到 Kubernetes 上。
+   - 例如，使用 Helm 命令：
+     ```sh
+     helm install myrelease ./mychart
+     ```
+
+## 總結
+
+- **Kubernetes** 是主要的管理系統，它直接管理和運行容器化應用程序，提供核心的編排功能。
+- **Helm** 是輔助工具，它通過簡化和自動化應用程序的部署和管理，幫助更高效地使用 Kubernetes。
+
+這樣的組合使得在 Kubernetes 上運行和管理應用程序變得更簡單和高效。
+
+## 參考資料圖片
+
+{' '}
+<img src="/static/images/2024-06-06_kubernetes_helm/1.png" alt="Kubernetes and Helm" width="800" />

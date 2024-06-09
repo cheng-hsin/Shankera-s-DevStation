@@ -1,0 +1,194 @@
+---
+title: 'Kubernetes 實踐指南'
+date: '2024-06-09'
+lastmod: '2024-06-09'
+tags: ['Kubernetes', 'DevOps']
+draft: false
+summary: 'This is a practical guide to deploying applications, setting up autoscaling, and monitoring in Kubernetes.'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 部署應用至 Kubernetes
+
+### 1. 部署應用
+
+首先，創建並應用一個 Deployment 配置：
+
+```bash
+cat <<EOF > deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: nginx
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 200m
+        ports:
+        - containerPort: 80
+EOF
+
+# 部署 Deployment
+kubectl apply -f deployment.yaml
+```
+
+### 2. 創建並應用 Service
+
+接下來，創建並應用一個 Service 配置：
+
+```bash
+cat <<EOF > service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+EOF
+
+# 應用 Service 配置
+kubectl apply -f service.yaml
+```
+
+## 設置自動擴展（Horizontal Pod Autoscaling）
+
+### 1. 創建 HPA 配置
+
+使用以下命令創建 HPA 配置並寫入文件 hpa.yaml：
+
+```bash
+cat <<EOF > hpa.yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+EOF
+
+# 應用 HPA 配置
+kubectl apply -f hpa.yaml
+```
+
+### 2. 驗證 HPA 配置
+
+使用以下命令驗證 HPA 是否已正確創建並正在運行：
+
+    ```bash
+    kubectl get hpa
+    ```
+
+這將顯示集群中所有的 HPA 資源及其狀態。
+
+## 監控與日誌管理
+
+安裝 Prometheus 和 Grafana
+使用 Helm 安裝 Prometheus 和 Grafana：
+
+    ```bash
+    # 添加 Helm 存儲庫
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# 安裝 Prometheus
+
+helm install prometheus prometheus-community/prometheus
+
+# 安裝 Grafana
+
+helm install grafana grafana/grafana
+
+````
+
+配置 Prometheus 與 Grafana 集成
+使用以下命令創建 Prometheus 配置文件 prometheus.yml：
+
+    ```bash
+    cat <<EOF > prometheus.yml
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+EOF
+
+# 應用 Prometheus 配置
+kubectl apply -f prometheus.yml
+````
+
+登錄 Grafana 並設置數據源
+登錄 Grafana（默認用戶名密碼：admin / admin），然後添加 Prometheus 作為數據源並設置監控儀表板。
+
+## 完整流程示例
+
+1.  部署應用：
+
+        ```bash
+        kubectl apply -f deployment.yaml
+        ```
+
+2.  創建並應用 Service：
+
+        ```bash
+        kubectl apply -f service.yaml
+        ```
+
+3.  創建並應用 HPA：
+
+        ```bash
+        kubectl apply -f hpa.yaml
+        ```
+
+4.  驗證 HPA 配置：
+
+        ```bash
+        kubectl get hpa
+        ```
+
+5.  安裝 Prometheus 和 Grafana：
+
+        ```bash
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+          helm install prometheus prometheus-community/prometheus
+          helm install grafana grafana/grafana
+        ```
+
+6.  應用 Prometheus 配置：
+            ```bash
+            kubectl apply -f prometheus.yml
+            ```
+
+這樣，您就完成了在 Kubernetes 中部署應用、自動擴展以及設置監控的基本操作。希望這些資訊對您有幫助！🔨🤖🔧
