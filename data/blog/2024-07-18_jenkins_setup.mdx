@@ -1,5 +1,5 @@
 ---
-title: 'How to set up Jenkins'
+title: 'How to set up Jenkins on MacOs'
 date: '2024-07-18'
 lastmod: '2024-07-18'
 tags: ['jenkins']
@@ -17,116 +17,67 @@ To install Jenkins, you can follow the steps below:
 Step 1: Update your system
 
 ```bash
-sudo apt-get update
+brew update
 ```
 
-Step 2: Install Java
+Step 2: Install Jenkins
 
 ```bash
-sudo apt-get install openjdk-8-jdk
+brew install jenkins
 ```
 
-Step 3: Add the Jenkins repository key to the system
+Step 3: Start Jenkins
 
 ```bash
-wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+brew services start jenkins
 ```
 
-Step 4: Add the Jenkins repository to the system
+This will start Jenkins on your local machine. You can access Jenkins by going to [http://localhost:8080](http://localhost:8080) in your browser.
+
+# Set up Jenkins
+
+Once you have installed Jenkins, you can set it up by following the steps below:
+
+Step 1: Unlock Jenkins
+
+When you access Jenkins for the first time, you will be asked to unlock it. You can do this by running the following command:
 
 ```bash
-sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+cat /Users/Shared/Jenkins/Home/secrets/initialAdminPassword
 ```
 
-Step 5: Install Jenkins
+This will show you the initial admin password. You can copy and paste it into the Jenkins web interface.
+
+Step 2: Install recommended plugins
+
+After unlocking Jenkins, you will be asked to install the recommended plugins. You can do this by clicking on the "Install suggested plugins" button.
+
+Step 3: Create an admin user
+
+After installing the plugins, you will be asked to create an admin user. You can do this by entering the required information in the web interface.
+
+Step 4: Start using Jenkins
+
+Once you have set up Jenkins, you can start using it to create and manage your projects.
+
+# Other useful commands
+
+Here are some other useful commands that you can use to manage Jenkins:
+
+- Stop Jenkins
 
 ```bash
-sudo apt-get update
-sudo apt-get install jenkins
+brew services stop jenkins
 ```
 
-Step 6: Start Jenkins
+- Restart Jenkins
 
 ```bash
-sudo systemctl start jenkins
+brew services restart jenkins
 ```
 
-Step 7: Check the status of Jenkins
+- Check the status of Jenkins
 
 ```bash
-sudo systemctl status jenkins
+brew services list
 ```
-
-Step 8: Open Jenkins in your browser
-
-You can open Jenkins in your browser by visiting `http://localhost:8080`.
-
-# Other Jenkins commands
-
-## Restart Jenkins
-
-```bash
-sudo systemctl restart jenkins
-```
-
-## Stop Jenkins
-
-```bash
-sudo systemctl stop jenkins
-```
-
-## Check the logs of Jenkins
-
-```bash
-sudo journalctl -xe
-```
-
-## Unlock Jenkins
-
-When you first install Jenkins, you need to unlock it by running the following command:
-
-```bash
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-```
-
-This will show you the initial password to unlock Jenkins.
-
-## Install Jenkins plugins
-
-You can install Jenkins plugins by following these steps:
-
-1. Open Jenkins in your browser
-2. Click on `Manage Jenkins`
-3. Click on `Manage Plugins`
-4. Click on the `Available` tab
-5. Search for the plugin you want to install
-6. Click on `Install without restart`
-
-## Update Jenkins
-
-You can update Jenkins by running the following command:
-
-```bash
-sudo apt-get update
-sudo apt-get install jenkins
-```
-
-This will update Jenkins to the latest version.
-
-## Backup Jenkins
-
-You can backup Jenkins by copying the Jenkins home directory to a safe location. The Jenkins home directory is usually located at `/var/lib/jenkins`.
-
-## Restore Jenkins
-
-You can restore Jenkins by copying the Jenkins home directory back to the original location.
-
-## Uninstall Jenkins
-
-You can uninstall Jenkins by running the following command:
-
-```bash
-sudo apt-get remove jenkins
-```
-
-This will remove Jenkins from your system.
