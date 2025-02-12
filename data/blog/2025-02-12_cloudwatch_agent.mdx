@@ -1,0 +1,87 @@
+---
+title: '如何安裝和配置 CloudWatch Agent'
+date: '2025-02-12'
+lastmod: '2025-02-12'
+tags: ['cloudwatchagent']
+draft: false
+summary: '在 EC2 上安裝並設定 CloudWatch Agent 以傳送 log 到 CloudWatch'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+### 1. 安裝 CloudWatch Agent
+
+如果您還沒有安裝 CloudWatch Agent，首先在 EC2 上執行以下命令：
+
+```bash
+sudo yum install amazon-cloudwatch-agent -y
+```
+
+### 2. 創建並編輯配置檔案
+
+使用 `vim` 或您喜歡的文本編輯器來創建配置檔案：
+
+```bash
+sudo vim /opt/aws/amazon-cloudwatch-agent/etc/my-config.json
+```
+
+在 `my-config.json` 中，您需要指定 CloudWatch Agent 的設定。例如，這是一個基本的範例配置檔案，將 EC2 的 `var/log` 目錄中的 log 傳送到 CloudWatch。
+
+```json
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "root"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/syslog",
+            "log_group_name": "EC2-Logs",
+            "log_stream_name": "{instance_id}",
+            "timestamp_format": "%b %d %H:%M:%S"
+          },
+          {
+            "file_path": "/var/log/messages",
+            "log_group_name": "EC2-Logs",
+            "log_stream_name": "{instance_id}",
+            "timestamp_format": "%b %d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+要在 Linux 系統上啟動 Amazon CloudWatch 代理程式並指定組態檔案，請使用以下命令：
+
+```bash
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/my-config.json
+```
+
+此命令會指示代理程式載入位於 `/opt/aws/amazon-cloudwatch-agent/etc/my-config.json` 的組態檔案並啟動服務。
+**並啟動代理**：
+
+當您修改了 `my-config.json` 配置文件後，請使用以下命令來重新加載並重啟 CloudWatch Agent：
+
+```bash
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
+```
+
+- `-a stop` 會停止正在運行的 CloudWatch Agent。
+- `-a start` 會根據新的配置重新啟動 CloudWatch Agent。
+
+2. **確認代理狀態**：
+
+   您可以檢查 CloudWatch Agent 是否正確啟動並正在運行：
+
+   ```bash
+   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status
+   ```
+
+這樣，CloudWatch Agent 會根據新的配置檔案運行，並開始收集並傳送 log 到 CloudWatch。
