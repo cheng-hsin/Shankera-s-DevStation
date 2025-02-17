@@ -1,0 +1,126 @@
+---
+title: 'Kubernetes Rollout 策略'
+date: '2025-02-17'
+lastmod: '2025-02-17'
+tags: ['kubernetes', 'deployment']
+draft: false
+summary: 'Kubernetes Rollout 可以確保應用程式在更新過程中保持可用性。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+以下指南適用於 Kubernetes 中的 Deployment 或 StatefulSet 的 rollout 操作。它包含如何從 Pod 確認其上層資源（Deployment 或 StatefulSet），到執行 rollout 及檢查狀態。
+
+---
+
+## **步驟 1：查詢 Pod 擁有者類型與名稱**
+
+使用以下命令查詢 Pod 的擁有者類型（Owner Reference）和名稱：
+
+```bash
+kubectl get pod atrix-production-kafka-controller-0 -n atrix-production -o jsonpath="{.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}"
+```
+
+### **命令解析**
+
+- `kubectl get pod`：查詢指定 Pod 的詳細資訊。
+- `-n atrix-production`：指定命名空間為 `atrix-production`。
+- `-o jsonpath`：使用 JSONPath 提取特定欄位。
+  - `{.metadata.ownerReferences[0].kind}`：提取 Pod 的第一個擁有者類型（如 `ReplicaSet` 或 `StatefulSet`）。
+  - `{.metadata.ownerReferences[0].name}`：提取擁有者名稱（如 `atrix-production-kafka`）。
+
+### **預期輸出**
+
+- 若 Pod 屬於 StatefulSet：
+  ```
+  StatefulSet atrix-production-kafka
+  ```
+- 若 Pod 屬於 ReplicaSet（通常由 Deployment 管理）：
+  ```
+  ReplicaSet atrix-production-kafka-12345678
+  ```
+
+---
+
+## **步驟 2：確定上層資源類型**
+
+### **如果是 ReplicaSet**
+
+如果輸出顯示 `ReplicaSet`，則需要查詢該 ReplicaSet 的詳細資訊以確定其對應的 Deployment。
+
+```bash
+kubectl describe replicaset <replicaset-name> -n atrix-production
+```
+
+在輸出中，找到 `Controlled By` 欄位：
+
+```text
+Controlled By:  Deployment/<deployment-name>
+```
+
+### **如果是 StatefulSet**
+
+若輸出顯示 `StatefulSet`，可直接進行操作，無需額外查詢。
+
+---
+
+## **步驟 3：執行 Rollout**
+
+### **針對 Deployment 的 Rollout**
+
+1. 使用 Deployment 名稱執行 rollout：
+
+   ```bash
+   kubectl rollout restart deployment <deployment-name> -n atrix-production
+   ```
+
+2. 檢查 rollout 狀態：
+   ```bash
+   kubectl rollout status deployment <deployment-name> -n atrix-production
+   ```
+
+### **針對 StatefulSet 的 Rollout**
+
+1. 使用 StatefulSet 名稱執行 rollout：
+
+   ```bash
+   kubectl rollout restart statefulset <statefulset-name> -n atrix-production
+   ```
+
+2. 檢查 rollout 狀態：
+   ```bash
+   kubectl get pods -l app=<statefulset-name> -n atrix-production
+   ```
+   確認所有 Pods 狀態為 `Running`。
+
+---
+
+## **步驟 4：檢查 Rollout 結果**
+
+### **檢查 Pods 狀態**
+
+確認 Pods 是否正常運行：
+
+```bash
+kubectl get pods -n atrix-production
+```
+
+### **檢查映像版本**
+
+確認 Pods 使用的映像版本是否正確：
+
+```bash
+kubectl describe pod <pod-name> -n atrix-production | grep Image
+```
+
+---
+
+## **總結**
+
+1. 使用 `kubectl get pod` 提取 Pod 的 Owner Reference，確定其上層資源。
+2. 若為 Deployment，需進一步查詢 ReplicaSet 的 `Controlled By` 欄位。
+3. 使用 `kubectl rollout restart` 進行滾動更新。
+4. 使用相關命令檢查更新狀態與結果。
+
+---
