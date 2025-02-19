@@ -1,0 +1,114 @@
+---
+title: '設定 Prometheus Alertmanager 規則，使用 helm chart'
+date: '2025-02-18'
+lastmod: '2025-02-18'
+tags: ['prometheus', 'alertmanager', 'helm']
+draft: false
+summary: '透過 Helm Chart 設定 Prometheus Alertmanager 規則'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+這邊會用修改 helm values 的方式去加規則，其實 configmap 也可以做到，但是如果用 configmap 重啟 prometheus 的話會被 helm values 給覆蓋，所以還是直接改 helm 會好一點。
+
+使用 Helm 設定 Prometheus 規則的步驟：
+
+1. 備份工作
+
+- 導出當前 Helm values 備份
+  ```bash
+  helm get values prometheus -n prometheus -o yaml > prometheus-backup.yaml
+  ```
+- 如果需恢復輸入以下指令
+  刪除 deployment
+  ` kubectl delete deployment prometheus-server -n prometheus `
+- 重新升級回舊的
+  ```
+  helm upgrade prometheus prometheus-community/prometheus -n prometheus -f prometheus-backup.yaml
+  ```
+
+2. 如果是新建立的話就創建並編輯 `values.yaml` 參考以下設定。
+   如果已經有的話就直接匯出 yml 檔來修改，跳到下面步驟指定檔案 `alert-values.yaml`(這邊為了區別原來已經匯出的檔案所以用了不同黨名，其實是一樣的內容)
+
+   ```yaml
+   # 添加必需的空值配置
+   extraScrapeConfigs: '' # string 類型
+   imagePullSecrets: [] # array 類型
+   alertRelabelConfigs: {} # object 類型
+   server:
+     sidecarContainers: {} # object 類型
+   serviceAccounts:
+     server:
+       name: '' # string 類型
+
+   serverFiles:
+     alerting_rules.yml:
+       groups:
+         - name: kubernetes.rules
+           rules:
+             - alert: NodeHighCPUUsage
+               annotations:
+                 description: CPU usage is above 85% for 5 minutes
+                 summary: Node CPU usage high
+               expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+               for: 5m
+               labels:
+                 severity: warning
+             - alert: PodHighMemoryUsage
+               annotations:
+                 description: Memory usage is above 90% for 5 minutes in namespace {{ $labels.namespace }}, pod {{ $labels.pod }}
+                 summary: Pod memory usage high
+               expr: (sum by (pod) (container_memory_working_set_bytes{namespace="$namespace",container=""}) / sum by (pod) (kube_pod_container_resource_requests{namespace="$namespace", resource="memory"} + 262144000) * 100) > 90
+               for: 5m
+               labels:
+                 severity: warning
+             - alert: PodRestartOrTerminated
+               annotations:
+                 description: Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been restarted or terminated
+                 summary: Pod has been restarted or terminated
+               expr: sum(kube_pod_container_status_restarts_total) by (namespace, pod, container) > 0 or sum(kube_pod_status_phase{phase=~"Failed|Succeeded"}) by (namespace, pod) > 0
+               for: 5m
+               labels:
+                 severity: warning
+   ```
+
+3. 升級 Helm Chart
+   先刪除 deployment
+
+   ```bash
+   kubectl delete deployment prometheus-server -n prometheus
+   ```
+
+   務必要用 `--reuse-values` 表示保留其他值
+
+   ```bash
+   helm upgrade prometheus prometheus-community/prometheus -n prometheus -f alerts-values.yaml --reuse-values
+   ```
+
+   注意事項：
+
+   - `serverFiles` 下可以定義多個規則
+   - 檔案名稱（如 `alerting_rules.yml`）很重要
+   - 可以與現有的 PrometheusRules 共存
+   - 規則名稱相同時，後配置的會覆蓋先配置的
+
+   最佳實踐：
+
+   - 保持規則配置一致
+   - 使用版本控制管理 `values.yaml`
+   - 定期檢查和更新監控規則
+
+4. 有問題救不回來時重安裝 prometheus
+   ```
+   helm uninstall prometheus -n prometheus
+   ```
+5. 檢查 rules
+   把 prometheus postforward 到 localhost:9090
+   ```bash
+   kubectl port-forward svc/prometheus-server 9090:80 -n prometheus
+   ```
+   alertmanager postforward 到 localhost:9093
+   ```
+   kubectl port-forward svc/prometheus-alertmanager 9093:80 -n prometheus
+   ```
