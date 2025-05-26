@@ -1,0 +1,213 @@
+---
+title: 'Flatcar + Docker + ClamAV + Fluent Bit + CloudWatch 教學'
+date: '2025-05-27'
+lastmod: '2025-05-27'
+tags: ['flatcar', 'docker', 'clamav', 'fluent-bit', 'cloudwatch']
+draft: false
+summary: '使用 Flatcar Linux 搭配 Docker、ClamAV、Fluent Bit 和 CloudWatch 進行日誌和安全性管理的完整教學'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+vaultwarden 主機系統有時候會用 flatcar 版本，這時想丟 log 到 cloudwatch 可以用 Fluentbit，來代替 cloudwatch agent
+這篇教你如何在 Flatcar EC2 實例上：
+
+- 使用 Docker 執行 ClamAV 掃毒
+- 使用 Fluent Bit 將掃毒結果送到 CloudWatch Logs
+
+---
+
+### 1️⃣ ClamAV 掃毒腳本
+
+建立 `/clamscan/clamscan.sh`：
+
+```bash
+#!/bin/bash
+
+# 執行 ClamAV 掃描（透過 Docker）
+docker run --rm \
+  --cpus="0.2" \
+  -v /:/scan \
+  -v /var/log/clamav:/var/log/clamav \
+  clamav/clamav:latest \
+  clamscan -r /scan --log=/var/log/clamav/clamscan.log
+
+# 將最後 13 行追加到 clamscan-summary.log
+tail -n 13 /var/log/clamav/clamscan.log >> /var/log/clamav/clamscan-summary.log
+
+exit 0
+```
+
+**建立相關資料夾：**
+
+```bash
+mkdir -p /var/log/clamav
+chmod +x /clamscan/clamscan.sh
+```
+
+你也可以設 cron job（或 systemd timer）定時執行這個腳本。
+
+---
+
+### 2️⃣ Fluent Bit 設定檔
+
+建立 `/etc/fluent-bit/fluent-bit.conf`：
+
+```ini
+[SERVICE]
+    Flush         1
+    Log_Level     info
+
+[INPUT]
+    Name          tail
+    Path          /var/log/clamav/clamscan-summary.log
+    Refresh_Interval 5
+    Tag           clamscan
+    DB            /fluent-bit/tail-db/clamscan.db
+
+[OUTPUT]
+    Name          cloudwatch_logs
+    Match         *
+    region        ap-northeast-1
+    log_group_name  clamscan-log-group
+    log_stream_name  ${HOSTNAME}
+    auto_create_group true
+```
+
+**注意：** `region` 請換成你實際用的 AWS 區域。
+
+---
+
+### 3️⃣ 執行 Fluent Bit Docker container
+
+```bash
+docker run -d --name fluentbit \
+  --network=host \
+  -v /var/log/clamav:/var/log/clamav:ro \
+  -v /etc/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf \
+  public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
+```
+
+確認成功執行：
+
+```bash
+docker logs -f fluentbit
+```
+
+重啟：
+
+```bash
+docker restart fluentbit
+```
+
+---
+
+### 4️⃣ EC2 設定
+
+要讓 Fluent Bit 可以自動取得 IAM 資訊（例如角色授權），需要啟用 IMDSv2：
+
+```bash
+aws ec2 modify-instance-metadata-options \
+  --instance-id <your-instance-id> \
+  --http-tokens required \
+  --http-put-response-hop-limit 2
+```
+
+另外請確認 EC2 的 IAM Role 有下列權限：
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "logs:PutLogEvents",
+    "logs:DescribeLogStreams",
+    "logs:DescribeLogGroups",
+    "logs:CreateLogStream",
+    "logs:CreateLogGroup"
+  ],
+  "Resource": "*"
+}
+```
+
+---
+
+當然，這裡是精簡版的教學，從第五點開始：
+
+---
+
+### 5️⃣ 使用 **systemd timer** 定期執行 ClamAV 掃描
+
+**步驟一：創建 systemd service 檔案**
+
+1. 創建 `clamscan.service` 檔案：
+
+```bash
+sudo nano /etc/systemd/system/clamscan.service
+```
+
+2. 加入以下內容：
+
+```ini
+[Unit]
+Description=Run ClamAV Scan
+
+[Service]
+ExecStart=/bin/bash /clamscan/clamscan.sh
+```
+
+**步驟二：創建 systemd timer 檔案**
+
+1. 創建 `clamscan.timer` 檔案：
+
+```bash
+sudo nano /etc/systemd/system/clamscan.timer
+```
+
+2. 加入以下內容：
+
+```ini
+[Unit]
+Description=Run ClamAV Scan every hour
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+Unit=clamscan.service
+
+[Install]
+WantedBy=timers.target
+```
+
+**步驟三：重新加載 systemd 配置**
+
+```bash
+sudo systemctl daemon-reload
+```
+
+**步驟四：啟動 timer**
+
+```bash
+sudo systemctl start clamscan.timer
+sudo systemctl enable clamscan.timer
+```
+
+**步驟五：查看 timer 狀態**
+
+```bash
+sudo systemctl status clamscan.timer
+```
+
+---
+
+這樣就完成了 systemd timer 的設定！
+
+### ✅ 結果確認
+
+掃完毒後可以查看：
+
+```bash
+cat /var/log/clamav/clamscan-summary.log
+```
+
+進入 AWS CloudWatch Console → Logs → `clamscan-log-group` 查看結果。
