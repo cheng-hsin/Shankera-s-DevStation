@@ -1,0 +1,127 @@
+---
+title: 'AWS OpenVPN 設定流程 - OpenVPN Access Server（AWS Marketplace 版）'
+date: '2025-07-10'
+lastmod: '2025-07-10'
+tags: ['aws', 'openvpn', 'networking', 'security']
+draft: false
+summary: 'AWS OpenVPN 設定流程的詳細步驟和注意事項'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+提供 Web UI 管理、使用者認證、更友善的操作界面。
+
+---
+
+## 📘 前置準備事項
+
+- AWS VPC 已建立，並開啟 VPN 相關 Port（TCP 943、UDP 1194、TCP 443）
+- 擁有 AWS EC2 操作權限
+- 建議使用 Elastic IP 綁定 OpenVPN Server
+
+---
+
+## 🔹 設定流程
+
+1.  從 AWS Marketplace 建立 OpenVPN Access Server AMI
+
+    - 搜尋 `OpenVPN Access Server`
+    - 選擇合適版本（推薦 Ubuntu 版）
+    - 建立 EC2 並選擇適當的 security group：
+
+      ```
+      開放 Port:
+      TCP 22    - SSH
+      TCP 443   - Web VPN Portal
+      TCP 943   - Admin Web UI
+      UDP 1194  - OpenVPN 連線
+      ```
+
+      ![openvpn setting](/static/images/2025-07-10_openvpn_setting/1.png)
+
+      ![openvpn setting](/static/images/2025-07-10_openvpn_setting/2.png)
+
+2.  分配並綁定 Elastic IP 至該 EC2
+
+3.  透過 Web UI 登入
+
+    - 管理介面：https://&lt;ElasticIP&gt;:943/admin
+    - 使用者介面：https://&lt;ElasticIP&gt;:943
+    - 預設帳密：openvpn / openvpn（首次登入會要求更改）  
+      也可以用指令改密碼
+
+      ````
+      //Create or reset the openvpn administrative local account with specified password
+
+              cd /usr/local/openvpn_as/scripts
+              ./sacli --user "openvpn" --key "prop_superuser" --value "true" UserPropPut
+              ./sacli --user "openvpn" --key "user_auth_type" --value "local" UserPropPut
+              ./sacli --user "openvpn" --new_pass '<PASSWORD>' SetLocalPassword
+              ./sacli start
+              ```
+      ````
+
+4.  建立使用者帳號
+
+    - 登入管理介面 > User Management > User Permissions
+    - 建立新帳號，並設為 Allow Auto-login 或允許登入
+
+5.  下載連線檔案（.ovpn）
+
+    - 使用者登入 https://&lt;ElasticIP&gt;:943
+    - 登入後可直接下載對應作業系統的連線檔案或安裝 OpenVPN 客戶端
+
+6.  測試連線
+    - 使用 OpenVPN Connect 或 Tunnelblick 將 .ovpn 檔載入
+    - 連線並確認是否可通往內部資源（如 VPC 私網段）
+
+---
+
+## ✅ 優點
+
+- 提供圖形化 Web 管理界面
+- 支援整合 LDAP、RADIUS、SAML 等身分驗證
+- 可設定使用者權限與存取控制
+- 自帶憑證管理與自動簽發機制
+- 記錄用戶流量與連線日誌
+
+---
+
+Terraform
+
+```bash
+    resource "tls_private_key" "openvpn_key_5users" {
+      algorithm = "RSA"
+      rsa_bits  = 4096
+    }
+
+    resource "aws_key_pair" "openvpn_key_5users" {
+      key_name   = "openvpn-key-5users"
+      public_key = tls_private_key.openvpn_key_5users.public_key_openssh
+    }
+
+    resource "local_file" "private_key_pem_5users" {
+      filename        = "${path.module}/openvpn-key-5users.pem"
+      content         = tls_private_key.openvpn_key_5users.private_key_pem
+      file_permission = "0400"
+    }
+
+    resource "aws_instance" "openvpn_5users" {
+      ami                         = "ami-0c061d4b0dae75d55"
+      instance_type               = "t3a.medium"
+      subnet_id                   = "子網id(subnet-XXXXXXX)"
+      vpc_security_group_ids      = ["你的安全群組id(sg-XXXXXXX)"]
+      key_name                    = aws_key_pair.openvpn_key_5users.key_name
+      disable_api_termination     = true
+      associate_public_ip_address = true
+
+      tags = {
+        Name = "OpenVPN-Server-5users"
+      }
+    }
+
+    output "openvpn_5users_public_ip" {
+      value = aws_instance.openvpn_5users.public_ip
+    }
+```
