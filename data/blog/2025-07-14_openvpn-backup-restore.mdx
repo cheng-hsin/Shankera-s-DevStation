@@ -1,0 +1,222 @@
+---
+title: 'OpenVPN 備份與還原流程 - OpenVPN Access Server（AWS Marketplace 版）'
+date: '2025-07-14'
+lastmod: '2025-07-14'
+tags: ['aws', 'openvpn', 'networking', 'security']
+draft: false
+summary: 'OpenVPN 備份與還原流程的詳細步驟和注意事項'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 步驟一：在源 EC2 上備份數據庫
+
+### 1. 把 key 傳到要執行備份的那台 EC2
+
+```bash
+scp -i ./staging-key/openvpn-key-5users.pem /tmp/openvpn_backup_*.tar.gz openvpnas@ec2-57-181-116-160.ap-northeast-1.compute.amazonaws.com:/tmp/
+```
+
+### 2. 創建備份目錄並打包數據庫文件
+
+```bash
+# 創建備份目錄
+sudo mkdir -p /tmp/openvpn_backup
+
+# 複製所有數據庫文件到備份目錄
+sudo cp /usr/local/openvpn_as/etc/db/*.db /tmp/openvpn_backup/
+
+# 也可以備份整個 etc 目錄以防萬一
+sudo cp -r /usr/local/openvpn_as/etc /tmp/openvpn_backup/
+
+# 打包備份文件
+sudo tar -czf /tmp/openvpn_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /tmp openvpn_backup
+
+# 查看打包結果
+ls -la /tmp/openvpn_backup_*.tar.gz
+```
+
+## 步驟二：傳輸備份文件到目標 EC2
+
+### 使用 SCP 傳輸文件
+
+```bash
+# 語法：scp 源文件 用戶名@目標IP:目標路徑
+scp /tmp/openvpn_backup_*.tar.gz ec2-user@目標EC2的IP:/tmp/
+
+# 例如：
+scp /tmp/openvpn_backup_20250703_143000.tar.gz ec2-user@10.0.2.100:/tmp/
+```
+
+### 如果使用 SSH 金鑰
+
+```bash
+# 使用私鑰進行 SCP 傳輸
+scp -i /path/to/your-key.pem /tmp/openvpn_backup_*.tar.gz ec2-user@目標EC2的IP:/tmp/
+```
+
+```
+scp -i ./staging-key/openvpn-key-5users.pem /tmp/openvpn_backup_20250708_070732.tar.gz openvpnas@ec2-57-181-116-160.ap-northeast-1.compute.amazonaws.com:/tmp/
+```
+
+## 步驟三：在目標 EC2 上還原數據庫
+
+### 1. 解壓備份文件
+
+```bash
+# 切換到 /tmp 目錄
+cd /tmp
+
+# 解壓備份文件
+tar -xzf openvpn_backup_*.tar.gz
+
+# 查看解壓結果
+ls -la openvpn_backup/
+```
+
+### 2. 停止目標 EC2 的 OpenVPN Access Server
+
+```bash
+# 停止服務
+sudo systemctl stop openvpnas
+```
+
+### 3. 備份現有配置（可選但建議）
+
+```bash
+# 備份現有的數據庫目錄
+sudo cp -r /usr/local/openvpn_as/etc/db /usr/local/openvpn_as/etc/db_original_backup_$(date +%Y%m%d_%H%M%S)
+```
+
+### 4. 還原數據庫文件
+
+```bash
+# 確保目標目錄存在
+sudo mkdir -p /usr/local/openvpn_as/etc/db/
+
+# 刪除原本的 db 檔
+cd /usr/local/openvpn_as/etc/db
+rm -f certs.db cluster.db config.db config_local.db log.db notification.db userprop.db
+
+
+# 複製數據庫文件到正確位置
+sudo cp /tmp/openvpn_backup/*.db /usr/local/openvpn_as/etc/db/
+
+# 如果需要還原整個 etc 目錄
+# sudo cp -r /tmp/openvpn_backup/etc/* /usr/local/openvpn_as/etc/db/
+
+# 設置正確的文件權限
+sudo chown -R openvpn_as:openvpn_as /usr/local/openvpn_as/etc/db/
+sudo chmod 600 /usr/local/openvpn_as/etc/db/*.db
+```
+
+### 5. 驗證文件已正確複製
+
+```bash
+# 查看數據庫文件
+ls -la /usr/local/openvpn_as/etc/db/
+
+# 檢查文件權限
+ls -la /usr/local/openvpn_as/etc/db/*.db
+```
+
+## 步驟四：重新啟動目標 EC2 的 OpenVPN Access Server
+
+### 1. 啟動服務
+
+```bash
+# 重新啟動服務
+sudo systemctl restart openvpnas
+
+# 或者分別執行停止和啟動
+sudo systemctl stop openvpnas
+sudo systemctl start openvpnas
+```
+
+### 2. 檢查服務狀態
+
+```bash
+# 檢查服務狀態
+sudo systemctl status openvpnas
+
+# 檢查進程是否運行
+ps aux | grep openvpn
+
+# 檢查端口是否監聽
+sudo netstat -tlnp | grep openvpn
+```
+
+### 3. 查看服務日誌（如有問題）
+
+```bash
+# 查看最近的日誌
+sudo journalctl -u openvpnas -f
+
+# 查看 OpenVPN Access Server 的日誌
+sudo tail -f /usr/local/openvpn_as/etc/log/openvpnas.log
+```
+
+## 步驟五：驗證還原結果
+
+### 1. 通過 Web 界面測試
+
+- 訪問 `https://目標EC2的IP:943/admin`
+- 使用原有管理員帳戶登入
+- 確認所有設定和用戶資料都已正確還原
+
+### 2. 測試 VPN 連接
+
+- 嘗試使用現有的客戶端配置文件連接
+- 確認所有用戶都能正常連接
+
+## 清理工作
+
+### 清理臨時文件
+
+```bash
+# 在源 EC2 上清理
+sudo rm -rf /tmp/openvpn_backup*
+
+# 在目標 EC2 上清理
+sudo rm -rf /tmp/openvpn_backup*
+```
+
+## 重要數據庫文件說明
+
+| 文件名            | 用途           |
+| ----------------- | -------------- |
+| `config.db`       | 主要配置數據庫 |
+| `config_local.db` | 本地配置數據庫 |
+| `certs.db`        | 證書數據庫     |
+| `userprop.db`     | 用戶屬性數據庫 |
+| `log.db`          | 日誌數據庫     |
+| `notification.db` | 通知數據庫     |
+| `cluster.db`      | 集群配置數據庫 |
+
+## 故障排除
+
+### 如果服務啟動失敗
+
+```bash
+# 檢查詳細錯誤日誌
+sudo journalctl -u openvpnas --no-pager
+
+# 檢查配置文件語法
+sudo /usr/local/openvpn_as/scripts/sacli --key "config_file" ConfigQuery
+
+# 重置權限
+sudo chown -R openvpn_as:openvpn_as /usr/local/openvpn_as/
+```
+
+## 注意事項
+
+⚠️ **重要提醒**：
+
+- 確保兩台 EC2 之間的網路連通性
+- 備份前務必停止源 EC2 的 OpenVPN 服務
+- 還原前務必停止目標 EC2 的 OpenVPN 服務
+- 確保目標 EC2 上已安裝相同版本的 OpenVPN Access Server
+- 檢查文件權限和擁有者設定
+- 還原後務必進行完整的功能測試
+- 建議在維護時間窗口內執行此操作
