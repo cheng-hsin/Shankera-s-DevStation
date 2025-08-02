@@ -1,126 +1,94 @@
 ---
-title: 'Kubernetes Rollout 策略'
+title: 'Kubernetes 全 Namespace Rollout 管理教學（搭配 ChatGPT 生成指令）'
 date: '2025-02-17'
-lastmod: '2025-02-17'
-tags: ['kubernetes', 'deployment']
+lastmod: '2025-08-02'
+tags: ['kubernetes', 'deployment', 'rollout', 'chatgpt']
 draft: false
-summary: 'Kubernetes Rollout 可以確保應用程式在更新過程中保持可用性。'
+summary: '使用 ChatGPT 生成 Kubernetes 全 Namespace 的 rollout 重啟指令'
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
 
-以下指南適用於 Kubernetes 中的 Deployment 或 StatefulSet 的 rollout 操作。它包含如何從 Pod 確認其上層資源（Deployment 或 StatefulSet），到執行 rollout 及檢查狀態。
+## 目標
+
+- 先用 `kubectl get pods --all-namespaces` 取得所有 Pod 清單（可包含 namespace、pod 名稱、類型資訊）
+- 把清單貼給 ChatGPT，請它幫你生成針對每個 namespace 的 rollout 重啟指令（Deployment、StatefulSet、DaemonSet 混合）
+- 執行 GPT 幫你產生的指令進行重啟
+- 檢查哪些 Pod 已重啟，哪些還沒重啟
+- 針對 StatefulSet 的 `updateStrategy` 是 `OnDelete`，須手動刪 Pod 或改策略
 
 ---
 
-## **步驟 1：查詢 Pod 擁有者類型與名稱**
-
-使用以下命令查詢 Pod 的擁有者類型（Owner Reference）和名稱：
+## Step 1：列出所有 Pod（帶 namespace）
 
 ```bash
-kubectl get pod atrix-production-kafka-controller-0 -n atrix-production -o jsonpath="{.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}"
+kubectl get pods --all-namespaces
 ```
-
-### **命令解析**
-
-- `kubectl get pod`：查詢指定 Pod 的詳細資訊。
-- `-n atrix-production`：指定命名空間為 `atrix-production`。
-- `-o jsonpath`：使用 JSONPath 提取特定欄位。
-  - `{.metadata.ownerReferences[0].kind}`：提取 Pod 的第一個擁有者類型（如 `ReplicaSet` 或 `StatefulSet`）。
-  - `{.metadata.ownerReferences[0].name}`：提取擁有者名稱（如 `atrix-production-kafka`）。
-
-### **預期輸出**
-
-- 若 Pod 屬於 StatefulSet：
-  ```
-  StatefulSet atrix-production-kafka
-  ```
-- 若 Pod 屬於 ReplicaSet（通常由 Deployment 管理）：
-  ```
-  ReplicaSet atrix-production-kafka-12345678
-  ```
 
 ---
 
-## **步驟 2：確定上層資源類型**
+## Step 2：將輸出完整貼給 ChatGPT，請求
 
-### **如果是 ReplicaSet**
+> 「請幫我依照 namespace 分組，針對每個 namespace 的 Deployment、StatefulSet、DaemonSet，生成 kubectl rollout restart 指令清單，指令格式為：
+> `kubectl rollout restart <type> <name> -n <namespace>`，
+> 其中 `<type>` 可以是 deployment、statefulset、daemonset，
+> 並且同一個 namespace 裡的不同資源混合產生指令。」
 
-如果輸出顯示 `ReplicaSet`，則需要查詢該 ReplicaSet 的詳細資訊以確定其對應的 Deployment。
+---
+
+## Step 3：執行 ChatGPT 幫你生成的 rollout 重啟指令
+
+例如：
 
 ```bash
-kubectl describe replicaset <replicaset-name> -n atrix-production
+kubectl rollout restart deployment argocd-applicationset-controller -n argocd
+kubectl rollout restart statefulset vault -n vault
+kubectl rollout restart daemonset kube-proxy -n kube-system
+# ...其他指令依 ChatGPT 建議
 ```
-
-在輸出中，找到 `Controlled By` 欄位：
-
-```text
-Controlled By:  Deployment/<deployment-name>
-```
-
-### **如果是 StatefulSet**
-
-若輸出顯示 `StatefulSet`，可直接進行操作，無需額外查詢。
 
 ---
 
-## **步驟 3：執行 Rollout**
-
-### **針對 Deployment 的 Rollout**
-
-1. 使用 Deployment 名稱執行 rollout：
-
-   ```bash
-   kubectl rollout restart deployment <deployment-name> -n atrix-production
-   ```
-
-2. 檢查 rollout 狀態：
-   ```bash
-   kubectl rollout status deployment <deployment-name> -n atrix-production
-   ```
-
-### **針對 StatefulSet 的 Rollout**
-
-1. 使用 StatefulSet 名稱執行 rollout：
-
-   ```bash
-   kubectl rollout restart statefulset <statefulset-name> -n atrix-production
-   ```
-
-2. 檢查 rollout 狀態：
-   ```bash
-   kubectl get pods -l app=<statefulset-name> -n atrix-production
-   ```
-   確認所有 Pods 狀態為 `Running`。
-
----
-
-## **步驟 4：檢查 Rollout 結果**
-
-### **檢查 Pods 狀態**
-
-確認 Pods 是否正常運行：
+## Step 4：檢查 Pod 是否真的重啟（看 AGE 和 RESTARTS）
 
 ```bash
-kubectl get pods -n atrix-production
+kubectl get pods --all-namespaces -o wide
 ```
 
-### **檢查映像版本**
+---
 
-確認 Pods 使用的映像版本是否正確：
+## Step 5：若 StatefulSet Pod 沒重啟，檢查更新策略
 
 ```bash
-kubectl describe pod <pod-name> -n atrix-production | grep Image
+kubectl get statefulset <statefulset-name> -n <namespace> -o yaml | grep updateStrategy -A 3
+```
+
+- `type: OnDelete` → 需要手動刪除 Pod 才會生效
+- `type: RollingUpdate` → 可用 rollout restart 自動更新
+
+---
+
+## Step 6：手動刪除 Pod（必要時）
+
+```bash
+kubectl delete pod <pod-name> -n <namespace>
 ```
 
 ---
 
-## **總結**
+## Step 7（選擇性）：修改 StatefulSet 策略為 RollingUpdate 方便管理
 
-1. 使用 `kubectl get pod` 提取 Pod 的 Owner Reference，確定其上層資源。
-2. 若為 Deployment，需進一步查詢 ReplicaSet 的 `Controlled By` 欄位。
-3. 使用 `kubectl rollout restart` 進行滾動更新。
-4. 使用相關命令檢查更新狀態與結果。
+```bash
+kubectl patch statefulset <statefulset-name> -n <namespace> -p '{"spec": {"updateStrategy": {"type": "RollingUpdate"}}}'
+```
 
 ---
+
+## Step 8：ChatGPT 可協助
+
+- 從 Pod 清單解析 Deployment、StatefulSet、DaemonSet 名稱與 namespace
+- 產生完整 rollout restart 指令清單（混合 type，依 namespace 分組）
+- 分析 rollout 後 Pod 是否有重啟（根據 AGE、RESTARTS）
+- 檢查 StatefulSet 的 `updateStrategy` 設定
+- 寫指令批量刪除舊 Pod
