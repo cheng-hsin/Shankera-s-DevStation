@@ -1,0 +1,119 @@
+---
+title: '🌐【AWS Global Accelerator 實務分享】切換 VPN 流量到指定區域的那些小眉角'
+date: '2025-08-28'
+lastmod: '2025-08-28'
+tags: ['aws', 'global accelerator', 'vpn', 'traffic routing']
+draft: false
+summary: '本篇文章將分享如何使用 AWS Global Accelerator 來切換 VPN 流量到指定區域的實務經驗，並探討其中的技巧與注意事項。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+最近在操作 Global Accelerator（以下簡稱 GA）來管理 VPN 流量，遇到了一些有趣又實用的小問題，也趁這次機會整理一下流程跟重點，分享給有類似需求的朋友參考。
+
+---
+
+### 🧀 使用情境
+
+我們的架構是這樣：
+
+- 一個 GA 加速器，前面是 Global DNS 名稱
+- 後面兩個地區的 OpenVPN Server（東京、首爾）
+- 兩個 listener：1194 UDP 和 443 TCP（對應 OpenVPN）
+
+需求是：「我要從原本的 **首爾 VPN EC2** 切換到 **東京的 EC2**，讓流量從東京走。」
+
+---
+
+### 👀 一開始的直覺操作是：
+
+我把首爾區的 EC2 權重設成 0
+把東京區的 EC2 權重設成 100
+
+結果 VPN **還是連到首爾…**
+
+---
+
+### 🔍 問題在哪？
+
+GA 的分流有兩個層級：
+
+| 層級名稱                             | 控制什麼                            | 設定錯會發生什麼事                  |
+| ------------------------------------ | ----------------------------------- | ----------------------------------- |
+| `TrafficDialPercentage` （流量撥號） | 控制整個區域「接不接流量」          | 設成 0 就整區不接流量（不會走進來） |
+| `Weight` （權重）                    | 控制同一區內「哪台 EC2 接多少流量」 | 設成 0 的機器不會被選到             |
+
+我那時候雖然把「首爾 EC2 權重設 0」，但「首爾的整體流量還是 100%」，導致：
+
+> GA 想把流量送去首爾 → 但那邊沒機器可以接 → **流量斷了**
+
+---
+
+### ✅ 正確做法
+
+若要把流量從「首爾」切換到「東京」，該做的設定是：
+
+#### 東京：
+
+- `TrafficDialPercentage = 100`
+- 權重維持原本（只要 >0 就會被選）
+
+#### 首爾：
+
+- `TrafficDialPercentage = 0`
+- 權重可以忽略（反正不會送過去）
+
+這樣就能順利讓 VPN 流量轉到東京區。
+
+---
+
+### 🤔 額外補充：權重都是 100 和都是 50 有差嗎？
+
+沒有差。權重是用「比例」來分流：
+
+- 兩台都是 100 → 各 50%
+- 兩台都是 50 → 還是各 50%
+
+只要比例一樣，流量分配就一樣。
+
+---
+
+### 🪧 圖片支援，位置不同也不好找
+
+點進去加速器
+
+![image](/static/images/2025-08-28_aws_global_accelerator/1.png)
+
+點接聽程式
+
+![image](/static/images/2025-08-28_aws_global_accelerator/2.png)
+
+點進去端點
+
+![截圖 2025-08-28 上午11.32.28](/static/images/2025-08-28_aws_global_accelerator/3.png)
+
+### - 權重
+
+勾選按編輯就可以改權重
+
+![image](/static/images/2025-08-28_aws_global_accelerator/4.png)
+
+![image](/static/images/2025-08-28_aws_global_accelerator/5.png)
+
+### - 流量撥號
+
+![image](/static/images/2025-08-28_aws_global_accelerator/6.png)
+
+![image](/static/images/2025-08-28_aws_global_accelerator/7.png)
+
+### ✍️ 小結
+
+- GA 分流設定要分清楚 **兩個層級**
+- 切換地區：**改 TrafficDial**
+- 切換同區內哪台接：**改 Weight**
+- 設錯的時候 Console 上看起來都「健康」，但流量會神秘消失 ⚠️
+
+---
+
+希望這篇簡單的分享文，對你未來在用 GA 管理流量（特別是 VPN、多地區部署）時有幫助 ＾＿＾
