@@ -1,0 +1,86 @@
+---
+title: 'OpenSearch 的 Index Template vs Index Pattern：初學者易踩到的坑'
+date: '2025-08-30'
+lastmod: '2025-08-30'
+tags: ['opensearch', 'index template', 'index pattern']
+draft: false
+summary: '很多初學者在使用 OpenSearch 時，會把 Index Template 和 Index Pattern 搞混，本文將釐清兩者的差異與使用情境。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+最近在設定 FireLens 把 ECS container log 寫進 OpenSearch 時，遇到一個狀況讓我卡了好久：**index 明明有了、template 也設了，但在 OpenSearch Dashboards 的 Discover 卻怎麼樣都看不到資料。**
+
+後來仔細研究才理解，這整個流程裡有一個關鍵差異是：
+
+👉 **Index Template 跟 Index Pattern 是完全不一樣的東西！**
+
+---
+
+### 🔧 Index Template 是給 OpenSearch 本身用的
+
+當我設定 FireLens 的 logConfiguration，指定 log 要寫入像 `chainss-bitgo-mgmt-task-%Y-%m` 這樣的 index 時，我以為只要建立好對應的 `index template` 就會自動出現在 Dashboards。
+
+但事實上：
+
+- **Index Template 的作用是：當 OpenSearch 接收到新的寫入請求時，該 template 就會被套用到這個新 index**
+- 例如：你可以定義 `@timestamp` 是 `date` 類型，或 index 有幾個 shards
+- 它是寫給 OpenSearch 系統自己看的，跟 Dashboards 無關
+
+---
+
+### 👀 Index Pattern 才是 Dashboards 能看到的
+
+我在 Discover 頁面一直看不到 log，還以為資料沒進來，結果：
+
+- 發現其實 index `chainss-bitgo-mgmt-task-2025-07` 已經被正確建立
+- `GET _cat/indices` 也查得到，log 都在那邊
+- 問題出在我根本沒建立對應的 **Index Pattern**
+
+後來才知道：
+
+> 🔍 **Index Pattern 是 Dashboards UI 查資料的關鍵，它不會自動幫你建立！**
+
+你必須進到 Dashboard Management → Data Views 裡，手動建立：
+
+- 名稱：`chainss-bitgo-mgmt-task-*`
+- 時間欄位：選 `@timestamp`
+
+這樣 Discover 才知道去哪個 index 找 log。
+
+---
+
+![image](/static/images/2025-08-30_opensearch_tamplates/1.png)
+
+### 💥 初學者最常遇到的坑
+
+1. **Template 建了，但沒有對應 Pattern → Discover 看不到資料**
+2. **Index Pattern 沒選對時間欄位 → 查不到 log**
+3. **時間範圍選太短（例如 Last 15 minutes）→ 明明資料進來了卻看不到**
+4. **template 的 priority 沒設好，導致跟 default-template 衝突，無法套用想要的 mapping**
+5. **混淆 template vs pattern，誤以為設了 template，Dashboards 就會自動有 pattern**
+
+---
+
+### 🛠️ 建議做法（踩完坑之後）
+
+- **Always 建立 Index Template**：讓未來 index 有正確設定
+- **記得進 Dashboards 建 Data View（Index Pattern）**：尤其要選 `@timestamp`
+- **確認時間欄位有被寫入**，不然會無法套時間篩選
+- **template 的 priority 要高於 default-template**（不然會被吃掉）
+
+---
+
+### ✅ 小結：它們真的完全不一樣
+
+| 功能                        | Index Template                          | Index Pattern (Data View)        |
+| --------------------------- | --------------------------------------- | -------------------------------- |
+| 誰用的？                    | OpenSearch 系統                         | OpenSearch Dashboards 使用者     |
+| 用途                        | 控制新 index 建立時的設定與 mapping     | 讓 Dashboards 能查詢對應的 index |
+| 自動建立？                  | 不會套用 pattern，也不會出現在 Discover | 要手動建立                       |
+| 跟 log 能不能寫進來有關嗎？ | 有（mapping 不正確可能寫不進來）        | 沒有（只是在 Dashboard 找不到）  |
+
+---
+
+希望這篇能幫助像我一樣初次接觸 OpenSearch 的朋友少踩一點坑 🐰
