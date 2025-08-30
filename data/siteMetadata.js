@@ -3,7 +3,7 @@ const siteMetadata = {
   author: 'Shankera Liang',
   headerTitle: "Shankera's DevStation",
   description:
-    "Tech learning journey at Shankera's DevStation. Find my notes, insights, and innovative techniques here.",
+    "Explore DevOps, AWS cloud, and infrastructure automation at Shankera's DevStation. Tutorials on Kubernetes, Terraform, CI/CD, and security.",
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://shankera-s-dev-station.vercel.app/',
