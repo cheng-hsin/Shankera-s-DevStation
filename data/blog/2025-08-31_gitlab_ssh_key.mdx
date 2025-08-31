@@ -1,0 +1,89 @@
+---
+title: 'GitLab SSH Key 更新與驗證全攻略'
+date: '2025-08-31'
+lastmod: '2025-08-31'
+tags: ['gitlab', 'ssh key', 'authentication']
+draft: false
+summary: '如何在 GitLab 上更新 SSH Key 並驗證其正確性，確保安全且順利的版本控制操作。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+### 1. 產生新 SSH Key
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com" -f ~/.ssh/id_ed25519_gitlab_2025
+```
+
+這樣會產生一對新金鑰，存在 `~/.ssh/id_ed25519_gitlab_2025`（私鑰）和 `~/.ssh/id_ed25519_gitlab_2025.pub`（公鑰）。
+![image](https://hackmd.io/_uploads/rJIc13pwgx.png)
+
+---
+
+### 2. 把公鑰加到 GitLab
+
+```bash
+cat ~/.ssh/id_ed25519_gitlab_2025.pub
+```
+
+複製內容，貼到 GitLab 的 **Settings → SSH Keys** 裡新增。
+![image](/static/images/2025-08-31_gitlab_ssh_key/1.png)
+
+---
+
+### 3. 編輯 `~/.ssh/config`，指定專用設定
+
+在 `~/.ssh/config` 裡新增這段，確保連到 GitLab 時用你剛產生的新金鑰：
+
+```text
+Host chainss-gitlab
+  HostName chainss-gitlab.chainss.io
+  Port 2222
+  User git
+  IdentityFile ~/.ssh/id_ed25519_gitlab_2025
+  IdentitiesOnly yes
+```
+
+- `Host chainss-gitlab`：這是給 ssh 命令用的簡稱。
+- `HostName` 和 `Port`：指定實際的伺服器和埠號。
+- `User git`：GitLab 用的帳號。
+- `IdentityFile`：指定私鑰檔案。
+- `IdentitiesOnly yes`：只用指定的金鑰，不用嘗試其他。
+
+---
+
+### 4. 用設定好的 Host 連線測試
+
+```bash
+ssh -T chainss-gitlab -v
+```
+
+重點訊息會告訴你用的是哪支金鑰：
+
+```
+debug1: identity file /Users/你的帳號/.ssh/id_ed25519_gitlab_2025 type 3
+...
+debug1: Offering public key: /Users/你的帳號/.ssh/id_ed25519_gitlab_2025
+debug1: Server accepts key: /Users/你的帳號/.ssh/id_ed25519_gitlab_2025
+Authenticated to ...
+Welcome to GitLab, @你的帳號!
+```
+
+![image](/static/images/2025-08-31_gitlab_ssh_key/2.png)
+
+---
+
+### 5. 之後 push / pull 就用這個設定
+
+遠端 URL 記得改成用 `chainss-gitlab` 這個 Host，像這樣：
+
+```bash
+git remote set-url origin git@chainss-gitlab:chainss/Aws-Terraform.git
+```
+
+---
+
+這樣就可以管理 SSH 金鑰用哪把，避免因為多把金鑰而被系統挑錯。
+
+如果你只用一把金鑰，也可以不用 `.ssh/config`，但有多把建議一定要設定。
