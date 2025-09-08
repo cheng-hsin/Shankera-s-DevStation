@@ -1,14 +1,16 @@
 ---
 title: '如何安裝和配置 ClamAV 進行病毒掃描'
 date: '2025-02-11'
-lastmod: '2025-02-11'
-tags: ['clamav']
+lastmod: '2025-09-08'
+tags: ['clamav', 'antivirus', 'security']
 draft: false
 summary: 'clamav 是一個開源的反病毒引擎，用於檢測惡意軟件和病毒。本文將介紹如何安裝和配置 clamav，以及如何使用 clamav 進行病毒掃描。'
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
+
+# 裝 clamscan 並設置到 cloudwatch
 
 先確認 EC2 規格要 t3.medium 以上
 
@@ -45,122 +47,57 @@ echo "ClamAV 掃描完成於 $(date)" >> /var/log/clamav/clamscan-summary.log
 exit 0
 ```
 
-第二版
+---
 
-```bash=
+### **1. `clamscan.sh` 程式介紹**
+
+- **功能**：用於掃描 EC2 系統，並將掃描結果記錄到日誌中。
+- **儲存位置**：`/usr/local/share/clamscan`。
+- **執行權限**：已設置為 `sudo chmod +x`，並需要 root 權限進行手動執行。
+
+**程式內容**：
+
+```bash
 #!/bin/bash
 
-# Check for root privileges
-if [ "$(id -u)" != "0" ]; then
-    echo "Error: This script requires root privileges"
-    exit 1
-fi
+# 執行 ClamAV 掃描命令，並將掃描結果保存在 clamscan.log
+/usr/bin/clamscan -r / --log=/var/log/clamav/clamscan.log
 
-# Set variables
-SCAN_DIR="/home/ubuntu"
-LOG_DIR="/var/log/clamav"
-LOG_FILE="$LOG_DIR/clamscan.log"
-SUMMARY_FILE="$LOG_DIR/clamscan-summary.log"
+# 只保留 clamscan.log 中的最後 13 行，並將其追加到 clamscan-summary.log 中
+tail -n 13 /var/log/clamav/clamscan.log >> /var/log/clamav/clamscan-summary.log
 
-# Check if scan directory exists
-if [ ! -d "$SCAN_DIR" ]; then
-    echo "Error: Scan directory $SCAN_DIR does not exist"
-    exit 1
-fi
-
-# Check and create log directory
-if [ ! -d "$LOG_DIR" ]; then
-    mkdir -p "$LOG_DIR"
-    if [ $? -ne 0 ]; then
-        echo "Error: Cannot create log directory $LOG_DIR"
-        exit 1
-    fi
-fi
-
-# Check if ClamAV is installed
-if ! command -v clamscan &> /dev/null; then
-    echo "Error: ClamAV not found. Please install it first"
-    exit 1
-fi
-
-# Run virus scan
-echo "Starting scan of $SCAN_DIR..."
-if ! /usr/bin/clamscan -r "$SCAN_DIR" --log="$LOG_FILE"; then
-    echo "Warning: Errors occurred during ClamAV scan"
-fi
-
-# Check if log file exists
-if [ ! -f "$LOG_FILE" ]; then
-    echo "Error: Scan log file not found"
-    exit 1
-fi
-
-# Extract scan results
-START_TIME=$(grep "Start Date:" "$LOG_FILE" | tail -n 1 | awk '{print $3, $4}')
-END_TIME=$(grep "End Date:" "$LOG_FILE" | tail -n 1 | awk '{print $3, $4}')
-INFECTED_COUNT=$(grep "Infected files:" "$LOG_FILE" | tail -n 1 | awk '{print $3}')
-SCANNED_FILES=$(grep "Scanned files:" "$LOG_FILE" | tail -n 1 | awk '{print $3}')
-SCANNED_DIRS=$(grep "Scanned directories:" "$LOG_FILE" | tail -n 1 | awk '{print $3}')
-
-# Verify variables are not empty
-if [ -z "$START_TIME" ] || [ -z "$END_TIME" ] || [ -z "$INFECTED_COUNT" ]; then
-    echo "Error: Could not extract complete information from log"
-    exit 1
-fi
-
-# Determine scan result
-if [ "$INFECTED_COUNT" -eq 0 ]; then
-    RESULT="Scan Result: No viruses detected."
-else
-    RESULT="WARNING! Scan Result: Detected $INFECTED_COUNT infected files. Immediate action required!"
-fi
-
-# Generate summary report
-{
-    echo "=== ClamAV Scan Summary Report ==="
-    echo "Scan Directory: $SCAN_DIR"
-    echo "Start Time: $START_TIME"
-    echo "End Time: $END_TIME"
-    echo "Directories Scanned: $SCANNED_DIRS"
-    echo "Files Scanned: $SCANNED_FILES"
-    echo "$RESULT"
-} > "$SUMMARY_FILE"
-
+# 退出腳本
 exit 0
 ```
 
-### 3. 設置文件權限
+欲限制 cpu 可把指令改成`cpulimit -l 20 -- /usr/bin/clamscan -r / --log=/var/log/clamav/clamscan.log `
 
-確保腳本可以執行，並且日誌目錄具有正確的權限，如果沒有`/var/log/clamav` 要自己手動創建：
+---
 
-```bash
-sudo chmod 775 /var/log/clamav
-chmod +x /path/to/your/clamscan.sh
-```
+### **2. 日誌文件**
 
-### 4. 設定定時任務
+- **`clamscan.log`**：記錄掃描過程中的所有詳盡日誌。
+- **`clamscan-summary.log`**：記錄最終掃描報告（從 `clamscan.log` 中提取最後 13 行內容）。
 
-使用 `crontab` 定期執行掃描。比如每天 9:00 執行掃描：
+**位置**：這些日誌檔案都儲存在 `/var/log/clamav` 目錄下。
 
-```bash
-crontab -e
-```
+---
 
-加入以下條目：
+### **3. 定時任務設定**
 
-```bash
-0 9 * * * /path/to/your/scan.sh
-```
+- **設定 cronjob**：將此掃描腳本定時執行，執行者是 root。
+- **執行頻率**：每小時執行一次。
 
-也可以放在全域 `/etc/clamd.d`，裡面有不同檔案放 crontab
+**設定檔案位置**：`/etc/cron.d/clamscan-routine`。
 
-### 6. 測試與監控
-
-- 確保 `clamscan.sh` 腳本能正確執行並發送 Slack 訊息。
-- 可以手動運行腳本來測試是否正確發送掃描報告：
+**設定內容**：
 
 ```bash
-/path/to/your/clamscan.sh
+0 0 * * * root /usr/local/share/clamscan/clamscan.sh
 ```
 
-這樣，您便可以定期掃描系統並將結果通知到 Slack。
+重啟 cron job 才吃得到檔案：
+
+```
+sudo systemctl restart cron
+```
