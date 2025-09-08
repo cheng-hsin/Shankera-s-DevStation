@@ -1,0 +1,301 @@
+---
+title: '在 Fargate EKS 上安裝 ArgoCD 完整指南'
+date: '2025-09-08'
+lastmod: '2025-09-08'
+tags: ['argocd', 'eks', 'fargate', 'aws', 'kubernetes']
+draft: false
+summary: '如何在 AWS Fargate EKS 叢集上安裝和配置 ArgoCD，並通過 AWS Load Balancer Controller 進行外部訪問。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 1. 安裝 ArgoCD（推薦使用 Helm）
+
+推薦使用 Helm 安裝，因為相較於 `kubectl apply` 更容易管理。
+
+### 新增 Argo Helm Repository
+
+```bash
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+```
+
+**預期輸出：**
+
+```
+"argo" has been added to your repositories
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "argo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+```
+
+### 建立 Namespace 並安裝 ArgoCD
+
+```bash
+kubectl create namespace argocd
+```
+
+**預期輸出：**
+
+```
+namespace/argocd created
+```
+
+```bash
+helm install argocd argo/argo-cd \
+  --namespace argocd \
+  --version 8.0.16 \
+  --set server.insecure=true \
+  --set server.service.httpsPort=0 \
+  --set configs.params."server\.insecure"=true
+```
+
+**預期輸出：**
+
+```
+NAME: argocd
+LAST DEPLOYED: Thu Sep 04 14:30:00 2025
+NAMESPACE: argocd
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+In order to access the server UI you have the following options:
+
+1. kubectl port-forward service/argocd-server -n argocd 8080:443
+   ...
+```
+
+## 2. 本地測試連線
+
+### Port Forward 到本地端口
+
+```bash
+kubectl port-forward service/argocd-server -n argocd 8080:80
+```
+
+訪問 `http://localhost:8080` 確認 UI 可以正常載入。
+
+### 取得 ArgoCD 管理員密碼
+
+```bash
+kubectl -n argocd get secret argo-cd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+**預期輸出：**
+
+```
+xKj9mN8qP2wR5tY7
+```
+
+使用帳號 `admin` 和上述密碼登入 ArgoCD UI。
+
+## 3. 建立 AWS Load Balancer Controller 的 Service Account
+
+### 創建 IAM Service Account
+
+```bash
+eksctl create iamserviceaccount \
+  --cluster atrix-staging-taiwan \
+  --namespace kube-system \
+  --name aws-load-balancer-controller-taiwan \
+  --attach-policy-arn arn:aws:iam::471112694074:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve
+```
+
+**預期輸出：**
+
+```
+2025-09-04 14:35:12 [ℹ]  eksctl version 0.184.0
+2025-09-04 14:35:12 [ℹ]  using region ap-east-2
+2025-09-04 14:35:12 [ℹ]  1 iamserviceaccount (kube-system/aws-load-balancer-controller-taiwan) was included (based on the include/exclude rules)
+2025-09-04 14:35:12 [!]  serviceaccounts that exist in Kubernetes will be excluded, use --override-existing-serviceaccounts to override
+2025-09-04 14:35:12 [ℹ]  1 task: {
+    2 sequential sub-tasks: {
+        create IAM role for serviceaccount "kube-system/aws-load-balancer-controller-taiwan",
+        create serviceaccount "kube-system/aws-load-balancer-controller-taiwan",
+    }
+}
+2025-09-04 14:35:14 [ℹ]  created serviceaccount "kube-system/aws-load-balancer-controller-taiwan"
+```
+
+## 4. 安裝 AWS Load Balancer Controller
+
+### 新增 EKS Helm Repository
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+```
+
+### 安裝 AWS Load Balancer Controller
+
+```bash
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=atrix-staging-taiwan \
+  --set region=ap-east-2 \
+  --set vpcId=vpc-04bb5b74e2c8bd3e8 \
+  --set ingressClass=alb \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller-taiwan \
+  --set replicaCount=2 \
+  --set image.repository=public.ecr.aws/eks/aws-load-balancer-controller \
+  --set image.tag=v2.13.2 \
+  --set crds.enabled=true \
+  --set enable-waf=false \
+  --set enable-wafv2=false \
+  --set enable-shield=false \
+  --version 1.13.2
+```
+
+**預期輸出：**
+
+```
+NAME: aws-load-balancer-controller
+LAST DEPLOYED: Thu Sep 04 14:40:00 2025
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+AWS Load Balancer controller installed!
+```
+
+## 5. 確認 Pod 運行狀態
+
+```bash
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+```
+
+**預期輸出：**
+
+```
+NAME                                          READY   STATUS    RESTARTS   AGE
+aws-load-balancer-controller-5d8f7c9d-8k2xl   1/1     Running   0          2m
+aws-load-balancer-controller-5d8f7c9d-m9n4z   1/1     Running   0          2m
+```
+
+## 6. 套用 Ingress 設定
+
+Ingress 設定有兩種方式可以套用：
+
+### 方式一：使用 Helm Values 設定（統一管理）
+
+可以在安裝 ArgoCD 時直接透過 Helm values 設定 Ingress：
+
+```bash
+# 這種方式會在 helm install 時一併設定 ingress
+helm install argocd argo/argo-cd \
+  --namespace argocd \
+  --set server.ingress.enabled=true \
+  --set server.ingress.ingressClassName=alb \
+  --set server.ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"=internet-facing
+```
+
+### 方式二：使用獨立的 Ingress YAML 檔案（本次採用）
+
+這次我們採用獨立設定的方式，方便後續修改和管理：
+
+```bash
+kubectl apply -f ingress-argocd-taiwan.yaml
+```
+
+**預期輸出：**
+
+```
+ingress.networking.k8s.io/argocd-ingress created
+```
+
+### Ingress YAML 範例參考
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /
+spec:
+  rules:
+    - host: argocd.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+```
+
+## 7. 檢查 Ingress 狀態
+
+```bash
+kubectl get ingress -n argocd
+```
+
+**預期輸出：**
+
+```
+NAME             CLASS   HOSTS                    ADDRESS                                    PORTS   AGE
+argocd-ingress   alb     argocd.yourdomain.com    k8s-argocd-argocdingr-1234567890-1234567890.ap-east-2.elb.amazonaws.com   80      5m
+```
+
+等待 `ADDRESS` 欄位顯示 ALB 的 DNS 名稱，這可能需要幾分鐘時間。
+
+## 8. 測試外部連線
+
+使用步驟 7 中取得的 ALB DNS 名稱或您設定的自訂網域，在瀏覽器中訪問 ArgoCD UI：
+
+```
+https://k8s-argocd-argocdingr-1234567890-1234567890.ap-east-2.elb.amazonaws.com
+```
+
+或
+
+```
+https://argocd.yourdomain.com
+```
+
+使用之前取得的 `admin` 帳號和密碼登入。
+
+## 注意事項
+
+1. **Fargate 注意事項**：確保您的 EKS 叢集已正確設定 Fargate profile，涵蓋 `argocd` 和 `kube-system` namespace。
+
+2. **安全性**：生產環境中建議：
+
+   - 移除 `server.insecure=true` 設定
+   - 設定 TLS 證書
+   - 配置適當的 RBAC
+
+3. **網域設定**：如果使用自訂網域，需要在 DNS 服務商設定 CNAME 記錄指向 ALB 的 DNS 名稱。
+
+4. **防火牆設定**：確保安全群組允許從網際網路存取 ALB 的 80/443 port。
+
+## 故障排除
+
+如果遇到問題，可以使用以下指令進行診斷：
+
+```bash
+# 檢查 ArgoCD Pod 狀態
+kubectl get pods -n argocd
+
+# 檢查 ArgoCD 服務
+kubectl get svc -n argocd
+
+# 檢查 Ingress 詳細資訊
+kubectl describe ingress argocd-ingress -n argocd
+
+# 檢查 AWS Load Balancer Controller 日誌
+kubectl logs -n kube-system deployment/aws-load-balancer-controller
+```
+
+完成以上步驟後，您的 ArgoCD 就可以透過 ALB 從網際網路存取了。
