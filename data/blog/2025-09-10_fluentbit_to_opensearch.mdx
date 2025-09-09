@@ -145,10 +145,15 @@ resource "aws_iam_policy" "ec2_to_access_opensearch_policy" {
    - `indices:admin/mapping/put`
 
    點 Security
+
    ![image](/static/images/2025-09-10_fluentbit_to_opensearch/1.png)
+
    點 Roles
+
    ![image](/static/images/2025-09-10_fluentbit_to_opensearch/2.png)
+
    進去 Role
+
    ![image](/static/images/2025-09-10_fluentbit_to_opensearch/3.png)
 
 2. 在該角色的 **Mapped users**，加入 EC2 使用的 IAM Role ARN，例如：
@@ -160,8 +165,11 @@ resource "aws_iam_policy" "ec2_to_access_opensearch_policy" {
    這樣 OpenSearch 就會把來自這個 IAM Role 的請求視為 `fluentbit_role`，允許寫入索引。
 
    點 Mapped users
+
    ![image](/static/images/2025-09-10_fluentbit_to_opensearch/4.png)
+
    最後會長這樣就完成了
+
    ![image](/static/images/2025-09-10_fluentbit_to_opensearch/5.png)
 
 ---
