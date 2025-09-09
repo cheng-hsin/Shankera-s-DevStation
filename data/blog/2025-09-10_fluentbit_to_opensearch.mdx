@@ -1,0 +1,195 @@
+---
+title: '如何讓 AWS EC2 中的 Fluent Bit 成功寫入 OpenSearch：Internal 與 IAM Role 兩種方式'
+date: '2025-09-10'
+lastmod: '2025-09-10'
+tags: ['fluent-bit', 'opensearch', 'aws', 'ec2']
+draft: false
+summary: '如何在 AWS EC2 中配置 Fluent Bit，並成功將日誌數據寫入 OpenSearch，包括 Internal 與 IAM Role 兩種方式。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+在日常的 DevOps 工作中，常見的需求就是 **把 EC2 上的應用程式日誌，透過 Fluent Bit，寫入 Amazon OpenSearch**，方便後續搜尋、告警與視覺化。
+
+不過許多人在配置的時候會遇到類似這樣的錯誤訊息：
+
+```
+[error] [output:opensearch:opensearch.0] HTTP status=403 URI=/_bulk, response:
+{"error":{"root_cause":[{"type":"security_exception","reason":"no permissions for [indices:data/write/bulk] ...
+```
+
+這代表 **Fluent Bit 雖然能連線到 OpenSearch，但沒有寫入索引的權限**。
+要解決這個問題，通常有兩條路可以走：
+
+- **方法一：Internal 帳號**
+- **方法二：AWS IAM Role（推薦雲端原生環境）**
+
+---
+
+## 方法一：使用 Internal 帳號授權
+
+這種方式比較直覺，就是直接在 OpenSearch Dashboards 內建立使用者，並賦予角色。
+
+### 步驟
+
+1. **建立帳號**
+
+   - 登入 OpenSearch Dashboards
+   - `Security` → `Internal users` → 建立新帳號，例如：
+
+     ```
+     username: fluentbit
+     password: xxxxxx
+     ```
+
+2. **建立角色並分配權限**
+
+   - `Security` → `Roles` → 建立角色 `fluentbit_writer`
+   - 權限至少包含：
+
+     - `indices:data/write/bulk`
+     - `indices:admin/create`
+     - `indices:admin/mapping/put`
+
+3. **將使用者加入角色**
+
+   - 在角色的 **Mapped users** 裡加入 `fluentbit`
+
+4. **設定 Fluent Bit**
+
+   ```ini
+   [OUTPUT]
+       Name            opensearch
+       Match           *
+       Host            your-opensearch-domain.amazonaws.com
+       Port            443
+       TLS             On
+       AWS_Auth        Off
+       HTTP_User       fluentbit
+       HTTP_Passwd     xxxxxx
+       Index           fluentbit-logs
+   ```
+
+👉 優點：快速，容易測試。
+👉 缺點：帳密要寫在設定檔裡，安全性較差。
+
+---
+
+## 方法二：使用 AWS IAM Role (推薦)
+
+如果 EC2 是在 AWS 環境內運行，建議使用 IAM Role 的方式授權，避免明碼帳密，也更好管理。
+
+### 步驟一：建立 IAM Policy
+
+Terraform 範例：
+
+```hcl
+resource "aws_iam_policy" "ec2_to_access_opensearch_policy" {
+  name        = "ec2_to_access_opensearch_policy"
+  description = "Policy for EC2 Fluent Bit to write logs into OpenSearch"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "AllowLogToOpensearch",
+        Effect = "Allow",
+        Action = [
+          "es:ESHttpPost",
+          "es:ESHttpPut",
+          "es:ESHttpGet"
+        ],
+        Resource = [
+          "${var.chainss_aws_opensearch_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+```
+
+把這個 Policy attach 到 EC2 的 Instance Role（例如 `CloudWatchAgentServerRole`）。
+
+---
+
+### 步驟二：設定 Fluent Bit
+
+在 EC2 上的 Fluent Bit 配置檔，啟用 AWS IAM Auth：
+
+```ini
+[OUTPUT]
+    Name            opensearch
+    Match           *
+    Host            your-opensearch-domain.amazonaws.com
+    Port            443
+    TLS             On
+    AWS_Auth        On
+    AWS_Region      ap-northeast-1
+    Index           fluentbit-logs
+```
+
+這時候 Fluent Bit 會嘗試使用 EC2 instance profile 的 IAM Role 來簽署 request。
+如果馬上啟動 Fluent Bit，通常會先看到 `403 security_exception`，因為 OpenSearch 還沒認得這個 IAM Role。
+
+---
+
+### 步驟三：在 OpenSearch Security Plugin 做 Role Mapping
+
+這一步是 **解決 403 的關鍵**。
+
+1. 登入 OpenSearch Dashboards → `Security` → `Roles`
+   建立或修改一個角色，例如 `fluentbit_role`，權限至少包含：
+
+   - `indices:data/write/bulk`
+   - `indices:admin/create`
+   - `indices:admin/mapping/put`
+
+   點 Security
+   ![image](/static/images/2025-09-10_fluentbit_to_opensearch/1.png)
+   點 Roles
+   ![image](/static/images/2025-09-10_fluentbit_to_opensearch/2.png)
+   進去 Role
+   ![image](/static/images/2025-09-10_fluentbit_to_opensearch/3.png)
+
+2. 在該角色的 **Mapped users**，加入 EC2 使用的 IAM Role ARN，例如：
+
+   ```
+   arn:aws:iam::637423529854:role/CloudWatchAgentServerRole
+   ```
+
+   這樣 OpenSearch 就會把來自這個 IAM Role 的請求視為 `fluentbit_role`，允許寫入索引。
+
+   點 Mapped users
+   ![image](/static/images/2025-09-10_fluentbit_to_opensearch/4.png)
+   最後會長這樣就完成了
+   ![image](/static/images/2025-09-10_fluentbit_to_opensearch/5.png)
+
+---
+
+## 403 錯誤排查 Checklist
+
+如果遇到 `403 security_exception`，可以照以下順序檢查：
+
+1. **IAM Policy 是否正確**
+
+   - 是否包含 `es:ESHttpPost`、`es:ESHttpPut`
+   - Resource ARN 是否正確（要到索引層級 `/*`）
+
+2. **Fluent Bit 是否啟用了正確的認證方式**
+
+   - Internal 帳號 → `AWS_Auth Off` + `HTTP_User` / `HTTP_Passwd`
+   - IAM Role → `AWS_Auth On` + `AWS_Region`
+
+3. **OpenSearch Security Role 是否有足夠的索引權限**
+
+4. **是否正確 Mapping 到 IAM Role ARN**
+
+   - `Security → Roles → Mapped users` 裡要看到 EC2 的 Role ARN
+
+---
+
+## 總結
+
+- **Internal 帳號**：簡單快速，適合測試，但需要在設定檔裡放帳密。
+- **IAM Role**：符合雲端最佳實踐，安全性高，正式環境建議使用。
+- **Role Mapping 是關鍵**：如果沒有在 OpenSearch Security 裡把 IAM Role ARN map 到對應角色，即使 IAM Policy 正確，也一樣會 403。
