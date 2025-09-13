@@ -1,0 +1,158 @@
+---
+title: 'ArgoCD 連不到 GitLab Repo 的排查與解決流程（完整分享文）'
+date: '2025-09-13'
+lastmod: '2025-09-13'
+tags: ['argocd', 'gitlab', 'kubernetes']
+draft: false
+summary: '如何排查與解決 ArgoCD 無法連接 GitLab repository 的問題，包括網路、Token 設定等方面。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+近期在使用 ArgoCD 管理 Kubernetes 應用時，遇到一個常見問題：**ArgoCD repo-server 無法連到 GitLab repository**，報錯類似 `Failed to connect` 或 504 Gateway Timeout。以下分享完整排查與解決流程。
+
+---
+
+## 1️⃣ 問題背景
+
+- ArgoCD 環境部署在 AWS EKS，repo-server Pod 跑在 Fargate。
+- GitLab repository 使用 HTTPS 並需要 Personal Access Token (PAT) 或 Deploy Token。
+- **注意：GitLab 已逐漸棄用帳號密碼登入**，建議使用 PAT 或 Deploy Token。
+- 即使在 GitLab 上設定了白名單、帳號密碼正確，ArgoCD 還是連不到 repo，出現 timeout。
+
+---
+
+## 2️⃣ 初步排查
+
+1. **檢查 ArgoCD Pod 狀態**
+
+```bash
+kubectl get pods -n argocd
+```
+
+確認 `argocd-repo-server` 已經 Running。
+
+2. **確認 repo-server Pod 的網路能否訪問外部**
+
+原本想用 `curl` / `wget` / `nslookup` 測試，但 repo-server 容器內可能沒有安裝這些工具，這時候可以用 `git ls-remote` 測試 HTTPS 連線。
+
+---
+
+## 3️⃣ 建立 debug Pod（可選，用於更深入測試）
+
+有時候需要額外測試出口 IP 或 DNS，這時可以在同一 namespace 建立一個 debug Pod：
+
+```bash
+kubectl run debug --image=alpine:3.18 -n argocd -- sleep 3600
+```
+
+> 注意：如果 Pod Pending，通常是 Fargate profile 資源不足或 Node 不可用，需要檢查 `kubectl describe pod debug -n argocd`。
+
+進入 Pod 後可以測試：
+
+```bash
+kubectl exec -it -n argocd debug -- sh
+# 安裝 curl
+apk add --no-cache curl
+# 測外部 IP
+curl ifconfig.me
+# 測 GitLab HTTPS
+curl -vk https://gitlab.example.com/your-repo.git
+```
+
+### 3.1️⃣ 測試 Pod 出口 IP 範例
+
+```bash
+curl ifconfig.me
+```
+
+範例輸出：
+
+```text
+203.0.113.45
+```
+
+> 這個就是 ArgoCD Pod 的出口 IP，需要把它加到 GitLab repository 白名單，或在 Terraform 中新增對應的 Security Group rule。
+
+---
+
+## 4️⃣ 直接在 repo-server Pod 測試 GitLab 連線
+
+```bash
+kubectl exec -it -n argocd argocd-repo-server-xxxx -- git ls-remote https://gitlab.example.com/your-repo.git
+```
+
+系統會要求輸入帳號與 Token：
+
+```text
+Username for 'https://gitlab.example.com': gitlab-ci-token
+Password for 'https://gitlab-ci-token@gitlab.example.com':
+```
+
+成功後會列出 repository 的 branch，例如：
+
+```text
+a1b2c3d4e5f6g7h8i9j0	HEAD
+abcd1234ef567890gh12	refs/heads/backup
+1234abcd5678efgh9012	refs/heads/production
+5678efgh1234abcd9012	refs/heads/staging
+```
+
+> 這表示 HTTPS 連線與 Token 驗證都成功，ArgoCD 可以順利拉取 GitLab repository。
+
+---
+
+## 5️⃣ 解決方案
+
+### 5.1️⃣ 確認出口 IP 在 GitLab 白名單中
+
+- 由 `curl ifconfig.me` 或 debug Pod 確認 Pod 的出口 IP。
+- 把這個 IP 加入 GitLab repository 的 whitelist。
+
+### 5.2️⃣ 更新 Terraform 管理的 Security Group
+
+```hcl
+resource "aws_security_group_rule" "chainss_gitlab_ingress_443_argocd_repo_server_ip" {
+  count             = var.env_environment == "staging" ? 1 : 0
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.example_gitlab_rules[0].id
+  cidr_blocks       = ["203.0.113.45/32"]  # repo-server Pod 的出口 IP
+  description       = "ArgoCD repo-server pod IP"
+}
+```
+
+> 如果 Pod scale out / scale in，出口 IP 可能會變，建議使用固定 NAT / Elastic IP。
+
+### 5.3️⃣ 在 ArgoCD CLI 或 GUI 中重新添加 repository
+
+```bash
+argocd repo add https://gitlab.example.com/your-repo.git \
+  --username gitlab-ci-token \
+  --password <你的 PAT>
+```
+
+成功後，ArgoCD 就能順利同步應用，504 Timeout 消失。
+![image](https://hackmd.io/_uploads/SyerfRo9xe.png)
+
+---
+
+## 6️⃣ GitLab Token 說明
+
+- GitLab 已逐漸棄用帳號密碼登入 → ArgoCD 設定 repo 時：
+
+  - **Username**：填 `oauth2` 或你的 Token 名稱（例如 `gitlab-ci-token`）
+  - **Password**：填 Personal Access Token (PAT) 或 Deploy Token
+
+---
+
+## 7️⃣ 經驗總結
+
+- **出口 IP 白名單**是 HTTPS repo 常見問題來源，尤其在 Fargate 或多 Pod 環境。
+- **Debug Pod**可以用來檢查網路、DNS 和出口 IP，是排查網路問題的好方法。
+- **git ls-remote** 是測試 HTTPS 連線最簡單可靠的方法，不依賴 curl/wget。
+- Terraform 管理 Security Group 可以確保白名單可追蹤、可回滾，避免手動在 console 更新造成不同步。
+- 使用 **Personal Access Token (PAT) 或 Deploy Token**，符合 GitLab 最新安全策略。
