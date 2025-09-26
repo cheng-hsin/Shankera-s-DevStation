@@ -147,6 +147,22 @@ export VAULT_TOKEN=<Root Token>
 2. 加入 Raft 集群：
 
 ```bash
+Node       Address                        State     Voter
+----       -------                        -----     -----
+vault-0    vault-0.vault-internal:8201    leader    true
+```
+
+去另外兩台做以下指令：
+
+```
+kubectl -n vault exec -it vault-1 -- /bin/sh
+```
+
+```
+export VAULT_TOKEN=hvs.XXXXXXXXXXXXXXX
+```
+
+```
 vault operator raft join http://vault-0.vault-internal:8200
 vault operator unseal    # 輸入其中一組 Unseal Key
 vault operator raft list-peers
@@ -187,7 +203,65 @@ Pod → 掛載 EFS Access Point
 
 這樣整個 Vault 部署流程就完整了：
 
-- StorageClass 先建
-- PVC 隨 Helm / StatefulSet 建立並可查詢
-- PV + Access Point 自動生成
-- Vault Pod 掛載後即可使用持久化存儲
+```bash
+NAME                               CLASS   HOSTS   ADDRESS                                                                PORTS   AGE
+vault-ha-cluster-service-ingress   alb     *       k8s-vault-vaulthac-0e9b13acef-2021229786.ap-east-2.elb.amazonaws.com   80      8s
+```
+
+### 8. 配置 Kubernetes 認證
+
+為 Vault 設定 Kubernetes 認證，需取得以下三個值：
+
+- `JWT_TOKEN`：從 Secret 中取得。
+- `K8S_HOST`：Kubernetes API 伺服器地址。
+- `K8S_CA_CERT`：secret 的 CA 證書。
+
+#### 步驟：
+
+1. 建立 Service Account Secret：
+
+```bash
+kubectl apply -f aws-deployment/vault-step/vault-sa-token.yaml
+```
+
+2. 提取認證所需值（在 Linux-like 環境下）：
+
+```
+export VAULT_TOKEN=hvs.XXXXXXXXXXXXXXX
+```
+
+```
+export VAULT_ADDR=http://127.0.0.1:8200
+```
+
+```bash
+export JWT_TOKEN=$(kubectl get secret vault-sa-token -n vault -o jsonpath='{.data.token}' | base64 --decode)
+export K8S_HOST=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+export K8S_CA_CERT=$(kubectl get secret vault-sa-token -n vault -o jsonpath='{.data.ca\.crt}' | base64 --decode)
+```
+
+```
+echo $JWT_TOKEN      # 顯示 JWT 內容
+echo $K8S_HOST       # 顯示 Kubernetes API 地址
+echo $K8S_CA_CERT    # 顯示 CA 證書內容
+
+```
+
+3. 在 Vault 中配置 Kubernetes 認證：
+
+```bash
+kubectl -n vault exec -it vault-0 -- vault auth enable kubernetes
+
+vault write auth/kubernetes/config \
+    token_reviewer_jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:$KUBERNETES_PORT_443_TCP_PORT" \
+    kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+```
+
+## 注意事項
+
+- 確保 EFS CSI Driver 已正確安裝並配置，否則 Vault 無法持久化資料。
+- 妥善保存初始化時產生的 Unseal Key 和 Root Token，遺失將無法恢復。
+- 檢查 Vault 集群狀態，確保所有 Pod 正常運行並加入 Raft 集群。
+- Kubernetes 認證配置需確保 `vault-sa-token` Secret 正確生成。
