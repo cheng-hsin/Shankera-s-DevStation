@@ -1,65 +1,63 @@
 ---
-title: 'Kubernetes + AWS EFS Vault 部署完整流程分享'
+title: 'Vault 在 Kubernetes 上的部署指南：使用 AWS EFS 實現持久化存儲'
 date: '2025-09-16'
 lastmod: '2025-09-16'
 tags: ['vault', 'kubernetes', 'aws', 'efs']
 draft: false
-summary: '如何在 Kubernetes 環境中部署 AWS EFS 與 HashiCorp Vault，並進行整合。'
+summary: '本文介紹如何在 AWS EKS Fargate 上部署 HashiCorp Vault，並使用 AWS EFS 進行持久化存儲。涵蓋自動解封、集群同步及 Kubernetes 認證配置等步驟。'
 layout: PostSimple
 bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
 
-在 Kubernetes 上部署有狀態服務（例如 Vault），需要持久化儲存。若使用 **AWS EFS + CSI Driver**，整個流程可以自動化，省去手動建立 PV / Access Point 的麻煩。以下整理整個部署流程與原理。
+# Vault 服務部署說明
 
----
+本文件提供在 AWS EKS Fargate 環境下部署 HashiCorp Vault 的詳細步驟，包含持久化儲存設定、自動解封、集群同步以及 Kubernetes 認證配置。部署完成後，Vault 可與 External Secrets Operator (ESO) 整合，用於管理帳號密碼。
 
-## 🔑 建立順序與概念
+## 環境需求
 
-### 1️⃣ 安裝 AWS EFS CSI Driver
+- **AWS EKS Fargate** 叢集
+- **AWS EFS** 用於持久化儲存
+- **Helm** 用於 Vault 安裝
+- **ArgoCD** 用於應用程式部署
+- **kubectl** 用於 Kubernetes 資源管理
+- **Vault CLI** 用於初始化與配置
 
-Vault 需要持久化儲存，在 EKS Fargate 中僅支援 AWS EFS。請先安裝 EFS CSI Driver：
+## 部署步驟
+
+### 1. 安裝 AWS EFS CSI Driver
+
+Vault 需要持久化儲存，在 EKS Fargate 中僅支援 AWS EFS。請先安裝 AWS EFS CSI Driver 以支援 EFS 掛載。
+
+建立好 arn:aws:iam::xxxxxxxx:role/EKS_EFS_CSI_DriverRole
+
+並增加對應的 turst policy 和 KS_EFS_CSI_Driver_Policy
 
 ```bash
-# 詳見官方說明
-https://github.com/kubernetes-sigs/aws-efs-csi-driver
+  helm upgrade --install aws-efs-csi-driver --namespace kube-system aws-efs-csi-driver/aws-efs-csi-driver \
+    --set controller.replicas=2 \
+    --set node.enabled=false \
+    --set sidecars.nodeDriverRegistrar.enabled=false \
+    --set controller.securityContext.privileged=false \
+    --set controller.containerSecurityContext.privileged=false \
+    --set serviceAccount.create=true \
+    --set serviceAccount.name=efs-csi-controller-sa
+    --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::xxxxxxxxx:role/EKS_EFS_CSI_DriverRole"
 ```
 
-- **功能**：支援 Kubernetes Pod 掛載 AWS EFS，並可動態建立 PV 與 Access Point。
+`詳見 https://github.com/kubernetes-sigs/aws-efs-csi-driver`
 
----
+### 2. 建立 StorageClass
 
-### 2️⃣ 建立 StorageClass
-
-StorageClass 是 Kubernetes 的存儲配置，指定 EFS CSI Driver 和動態生成 Access Point 的參數。
-
-```yaml
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: vault-efs
-provisioner: efs.csi.aws.com
-parameters:
-  fileSystemId: fs-xxxxxxxx # EFS ID
-  provisioningMode: efs-ap # 關鍵：自動建立 Access Point
-  directoryPerms: '755'
-  uid: '100'
-  gid: '100'
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-```
-
-- 套用 StorageClass：
+透過 Helm 安裝 Vault 時，會自動建立 EFS 的 Access Point 以及 PersistentVolumeClaim (PVC) 和 PersistentVolume (PV)。無需手動定義，但需確保 `StorageClass.yaml` 已正確配置 EFS ID、GID 和 UID。
 
 ```bash
 kubectl apply -f aws-deployment/vault-step/StorageClass.yaml
 ```
 
-> 💡 注意：StorageClass 先建立，PVC 才能動態觸發 PV + Access Point 生成。
+_注意_：請確認 `StorageClass.yaml` 中需要根據實際需求設定 EFS ID、GID 和 UID。
 
----
-
-### 3️⃣ 建立 Vault Namespace
+### 3. 建立 Vault Namespace
 
 為 Vault 建立專屬命名空間：
 
@@ -67,94 +65,114 @@ kubectl apply -f aws-deployment/vault-step/StorageClass.yaml
 kubectl create namespace vault
 ```
 
----
+### 4. 配置 AWS KMS 自動解封
 
-### 4️⃣ 部署 Vault 應用程式（PVC / PV / Access Point 自動生成）
+為 Vault 設定 AWS KMS 自動解封功能：
 
-- Vault 的 Helm Chart 或 StatefulSet YAML 會自動建立 PVC，例如：
+1. 建立 KMS 資源並取得 `kms_id`。
+2. 將 `kms_id` 填入 `aws-deployment/application/vault.yaml` 中 `seal "awskms"` 區段。
 
-```
-data-vault-0
-data-vault-1
-data-vault-2
-```
+### 5. 部署 Vault 應用程式
 
-- PVC 指向 `vault-efs` StorageClass → **EFS CSI Driver 會自動建立對應 PV + Access Point**
-- 不需要手動建立 PV 或 Access Point
-
-部署 Vault：
+使用 ArgoCD 部署 Vault，啟動三個 Pod（vault-0、vault-1、vault-2）：
 
 ```bash
 kubectl apply -f aws-deployment/application/vault.yaml
 ```
 
-- **查詢已建立的 PVC**：
+### 6. 檢查 Vault pod 狀態
+
+確認三個 Vault Pod 均已啟動並運行：
 
 ```bash
+kubectl get pods -n vault
+```
+
+出現這個問題可能是 pv, pvc 沒有刪除乾淨，請先刪除，它們會自動重建
+
+```bash
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  10m   fargate-scheduler  Pod not supported on Fargate: volumes not supported: data not supported because: PVC data-vault-0 not bound
+```
+
+```
 kubectl get pvc -n vault
+kubectl delete pvc -n vault --all
 ```
 
-會看到類似：
-
 ```
-NAME           STATUS   VOLUME                                     STORAGECLASS
-data-vault-0   Bound    pvc-220fe126-8ad9-4ed3-b037-4e62cd6bcce1   vault-efs
-data-vault-1   Bound    pvc-04ac92db-fa52-4f40-90e6-e44b3ec782d1   vault-efs
-data-vault-2   Bound    pvc-c436b7f0-0e50-4778-8346-30b4ef8d396c   vault-efs
-```
-
-- **查詢 PV 與對應 Access Point**：
-
-```bash
 kubectl get pv
-kubectl describe pv <pv-name>
+kubectl delete pv pvc-1a5e124f-2df9-4d3d-9878-52a8e08ef594
 ```
 
-- AWS 控制台也可看到自動建立的 **EFS Access Point**。
+### 7. 同步 Vault 集群
 
----
+將 `vault-1` 和 `vault-2` 加入 `vault-0` 的 Raft 集群：
 
-### 5️⃣ 配置 AWS KMS 自動解封
+去其中一個 Pod 執行以下指令：
 
-- 建立 KMS Key，取得 `kms_id`
-- 填入 Vault YAML `seal "awskms"` 區段，以支援自動解封
-
----
-
-### 6️⃣ 初始化 Vault
-
-進入 `vault-0` Pod：
-
-```bash
-kubectl -n vault exec -it vault-0 -- vault operator init
+```
+kubectl -n vault exec -it vault-0 -- /bin/sh
 ```
 
-- 會產生 **5 個 Unseal Key** 和 **Root Token**，請妥善保存
+init 之後記下 key 跟 root token
 
----
+```
+vault operator init
+```
 
-### 7️⃣ 同步 Vault Raft 集群
+初始化後會產生 **5 個 Unseal Key** 和 **Root Token**，請妥善記錄這些資訊。
 
-將其他節點加入 Raft 集群：
+接著做以下指令：
 
-1. 在 `vault-1` / `vault-2` Pod 上設定環境變數：
-
-```bash
+```
 export VAULT_ADDR=http://127.0.0.1:8200
-export VAULT_TOKEN=<Root Token>
 ```
 
-2. 加入 Raft 集群：
+```
+export VAULT_TOKEN=hvs.XXXXXXXXXXXXXXX
+```
 
-```bash
-vault operator raft join http://vault-0.vault-internal:8200
-vault operator unseal    # 輸入其中一組 Unseal Key
+```
 vault operator raft list-peers
 ```
 
-3. 確認集群狀態：
+會出現以下訊息：
 
-```text
+```bash
+Node       Address                        State     Voter
+----       -------                        -----     -----
+vault-0    vault-0.vault-internal:8201    leader    true
+```
+
+去另外兩台做以下指令：
+
+```
+kubectl -n vault exec -it vault-1 -- /bin/sh
+```
+
+```
+export VAULT_TOKEN=hvs.XXXXXXXXXXXXXXX
+```
+
+```
+vault operator raft join http://vault-0.vault-internal:8200
+```
+
+```
+vault operator unseal
+Unseal Key (will be hidden): XXXXXX (輸入其中一組在第一台 init 時產生的 key)
+```
+
+```
+vault operator raft list-peers
+```
+
+檢查集群狀態，確認所有 Pod 已正確加入 Raft 集群。會看到有 leader, followers：
+
+```bash
 Node       Address                        State       Voter
 ----       -------                        -----       -----
 vault-0    vault-0.vault-internal:8201    leader      true
@@ -162,32 +180,79 @@ vault-1    vault-1.vault-internal:8201    follower    true
 vault-2    vault-2.vault-internal:8201    follower    true
 ```
 
----
-
-## 🔑 動態存儲原理
-
-1. **StorageClass** → 設定 EFS CSI Driver 以及動態生成 Access Point 的規則
-2. **PVC** → App 建立 PVC 後，觸發 CSI Driver 建立 PV + Access Point
-3. **PV** → 自動生成，綁定 PVC
-4. **Access Point** → 自動生成，Pod 掛載使用
-
-**流程圖**：
+建立 ingress
 
 ```
-App (StatefulSet / Helm) → 建立 PVC
-PVC → 找 StorageClass (vault-efs)
-EFS CSI Driver → 建立 PV + EFS Access Point
-PVC ↔ PV 綁定
-Pod → 掛載 EFS Access Point
+kubectl apply -f aws-deployment/alb-ingress/vault/ingress.yaml
 ```
 
-> ✅ 也就是說，除了 StorageClass 要你先建，其他 PVC / PV / Access Point 都會在你 apply App YAML 之後自動生成。
+查地址
 
----
+```
+kubectl get ingress -n vault
+```
 
-這樣整個 Vault 部署流程就完整了：
+預期輸出：
 
-- StorageClass 先建
-- PVC 隨 Helm / StatefulSet 建立並可查詢
-- PV + Access Point 自動生成
-- Vault Pod 掛載後即可使用持久化存儲
+```bash
+NAME                               CLASS   HOSTS   ADDRESS                                                                PORTS   AGE
+vault-ha-cluster-service-ingress   alb     *       k8s-vault-vaulthac-0e9b13acef-2021229786.ap-east-2.elb.amazonaws.com   80      8s
+```
+
+### 8. 配置 Kubernetes 認證
+
+為 Vault 設定 Kubernetes 認證，需取得以下三個值：
+
+- `JWT_TOKEN`：從 Secret 中取得。
+- `K8S_HOST`：Kubernetes API 伺服器地址。
+- `K8S_CA_CERT`：secret 的 CA 證書。
+
+#### 步驟：
+
+1. 建立 Service Account Secret：
+
+```bash
+kubectl apply -f aws-deployment/vault-step/vault-sa-token.yaml
+```
+
+2. 提取認證所需值（在 Linux-like 環境下）：
+
+```
+export VAULT_TOKEN=hvs.XXXXXXXXXXXXXXX
+```
+
+```
+export VAULT_ADDR=http://127.0.0.1:8200
+```
+
+```bash
+export JWT_TOKEN=$(kubectl get secret vault-sa-token -n vault -o jsonpath='{.data.token}' | base64 --decode)
+export K8S_HOST=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+export K8S_CA_CERT=$(kubectl get secret vault-sa-token -n vault -o jsonpath='{.data.ca\.crt}' | base64 --decode)
+```
+
+```
+echo $JWT_TOKEN      # 顯示 JWT 內容
+echo $K8S_HOST       # 顯示 Kubernetes API 地址
+echo $K8S_CA_CERT    # 顯示 CA 證書內容
+
+```
+
+3. 在 Vault 中配置 Kubernetes 認證：
+
+```bash
+kubectl -n vault exec -it vault-0 -- vault auth enable kubernetes
+
+vault write auth/kubernetes/config \
+    token_reviewer_jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:$KUBERNETES_PORT_443_TCP_PORT" \
+    kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+```
+
+## 注意事項
+
+- 確保 EFS CSI Driver 已正確安裝並配置，否則 Vault 無法持久化資料。
+- 妥善保存初始化時產生的 Unseal Key 和 Root Token，遺失將無法恢復。
+- 檢查 Vault 集群狀態，確保所有 Pod 正常運行並加入 Raft 集群。
+- Kubernetes 認證配置需確保 `vault-sa-token` Secret 正確生成。
