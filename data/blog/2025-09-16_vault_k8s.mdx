@@ -1,7 +1,7 @@
 ---
 title: 'Vault 在 Kubernetes 上的部署指南：使用 AWS EFS 實現持久化存儲'
 date: '2025-09-16'
-lastmod: '2025-09-16'
+lastmod: '2025-09-26'
 tags: ['vault', 'kubernetes', 'aws', 'efs']
 draft: false
 summary: '本文介紹如何在 AWS EKS Fargate 上部署 HashiCorp Vault，並使用 AWS EFS 進行持久化存儲。涵蓋自動解封、集群同步及 Kubernetes 認證配置等步驟。'
@@ -10,7 +10,7 @@ bibliography: references-data.bib
 canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
 ---
 
-# Vault 服務部署說明
+## Vault 服務部署說明
 
 本文件提供在 AWS EKS Fargate 環境下部署 HashiCorp Vault 的詳細步驟，包含持久化儲存設定、自動解封、集群同步以及 Kubernetes 認證配置。部署完成後，Vault 可與 External Secrets Operator (ESO) 整合，用於管理帳號密碼。
 
