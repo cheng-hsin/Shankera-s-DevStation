@@ -1,0 +1,148 @@
+---
+title: '如何讓 ArgoCD 應用程式讀取 Vault 密碼庫的密碼？'
+date: '2025-09-29'
+lastmod: '2025-09-29'
+tags: ['argocd', 'vault', 'kubernetes', 'aws', 'efs']
+draft: false
+summary: '介紹如何在 ArgoCD 中配置應用程式以讀取 HashiCorp Vault 中的密碼，並使用 External Secrets Operator (ESO) 進行整合。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+本文檔整理了如何讓 ArgoCD 部署的應用程式，透過 **External Secrets Operator (ESO)** 使用 Vault 中的帳密。
+
+---
+
+## 整體流程
+
+1. **建立 ClusterSecretStore (或 SecretStore)**
+
+   - 用來定義如何連線到 Vault，例如：
+
+     ```yaml
+     apiVersion: external-secrets.io/v1alpha1
+     kind: ClusterSecretStore
+     metadata:
+       name: vault-backend
+     spec:
+       provider:
+         vault:
+           server: https://vault.example.com
+           path: secret
+           version: v2
+           auth:
+             token:
+               secretRef:
+                 name: vault-token
+                 key: token
+     ```
+
+   - ClusterSecretStore 可被多個 namespace 的 ExternalSecret 共用。
+
+2. **將帳密寫入 Vault**
+
+   - 使用 Vault CLI 或 API 將敏感資訊寫入指定路徑，例如：
+
+     ```bash
+     vault kv put secret/myapp/db-password password=abc123 username=ioioio
+     ```
+
+   - 寫入範例：
+     ```
+     vault kv put -mount=clustersecret argocd/atrix-staging/atrix-s3 \
+     access_key=YOUR_ACCESS_KEY \
+     secret_key=YOUR_SECRET_KEY
+     ```
+
+3. **建立 ExternalSecret (ESO) YAML**
+
+   - 編寫 `ExternalSecret` CR，描述從 Vault 抓取帳密並生成 Kubernetes Secret：
+
+     ```yaml
+     apiVersion: external-secrets.io/v1alpha1
+     kind: ExternalSecret
+     metadata:
+       name: myapp-secret
+       namespace: mynamespace
+     spec:
+       secretStoreRef:
+         name: vault-backend
+         kind: ClusterSecretStore
+       target:
+         name: myapp-k8s-secret
+         creationPolicy: Owner
+       data:
+         - secretKey: db-password
+           remoteRef:
+             key: secret/myapp/db-password
+             property: password
+     ```
+
+4. **套用 ExternalSecret YAML**
+
+   ```bash
+   kubectl apply -f my-external-secret.yaml
+   ```
+
+   - ESO Operator 會自動同步 Vault 中的帳密，並在對應的 namespace 下建立 Kubernetes Secret（例：`myapp-k8s-secret`）。
+
+5. **修改 ArgoCD Application YAML**
+
+   - 在 Application 部署的 workload（Deployment/StatefulSet/Pod Template）中，引用由 ESO 產生的 Secret：
+
+     ```yaml
+     envFrom:
+       - secretRef:
+           name: myapp-k8s-secret
+     ```
+
+6. **套用 Application YAML**
+
+   ```bash
+   kubectl apply -f application.yaml
+   ```
+
+   - ArgoCD 會部署應用程式，Pod 啟動時會讀取對應的 Secret。
+
+---
+
+## ESO vs Kubernetes Secret
+
+- **External Secrets Operator (ESO)**
+
+  - Kubernetes 控制器（Operator），負責從 Vault 等外部 Secret Provider 同步帳密。
+  - 本身不存密碼，而是「搬運」外部 Secret，並生成 Kubernetes Secret。
+  - 持續監控外部 Secret 是否有更新，自動更新對應的 K8s Secret。
+
+- **Kubernetes Secret (例：`myapp-k8s-secret`)**
+
+  - 實際存放在 K8s cluster 的帳密（Base64 編碼的 key-value）。
+  - Pod/Deployment 可以直接引用。
+
+**簡單比喻**：ESO 就像「同步器/外送員」，Kubernetes Secret 才是「放到家裡的餐點」，Pod 直接使用餐點，而 ESO 負責把 Vault 的餐點送到家裡。
+
+---
+
+## 注意事項
+
+- **ArgoCD Application 本身不會讀取 Secret**，真正使用 Secret 的是 ArgoCD 部署的 workload（Deployment/Pod）。
+- **Vault 與 ESO 的連線** 必須事先配置好（ClusterSecretStore 或 SecretStore）。
+- **Secret 同步機制** 由 ESO Operator 負責，ArgoCD 只需確保正確部署 Application 與 ExternalSecret。
+
+---
+
+## 流程圖
+
+```
+Vault (存帳密)
+   │
+   ▼
+External Secrets Operator (ESO) (同步器/搬運員)
+   │
+   ▼
+Kubernetes Secret (myapp-k8s-secret) (Pod 使用的餐點)
+   │
+   ▼
+Deployment / Pod (由 ArgoCD 部署，引用 Secret)
+```
