@@ -1,0 +1,103 @@
+---
+title: '刪除含敏感資料的 Git commit 步驟'
+date: '2025-09-30'
+lastmod: '2025-09-30'
+tags: ['git', 'sensitive-data', 'security']
+draft: false
+summary: '本文介紹如何使用 git filter-repo 工具刪除 Git commit 中的敏感資料，並重新推送到遠端倉庫。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+在開發過程中，有時候不小心把敏感資訊（例如 Token、API Key） commit 到 Git repository。即使本地刪掉或修改檔案，GitHub 也會掃描 commit 歷史，可能會 **阻擋 push**。本文介紹如何安全地刪掉含秘密的 commit，並將修改後的歷史推送到遠端。
+
+## 背景
+
+假設你在 `develop` 分支上不小心 commit 了 Token，例如：
+
+```
+commit 2cf88f03dc5691bce7d32fffbdec78806e6139fd
+path: /XXXXXX.mdx
+```
+
+嘗試推送會出現錯誤：
+
+```
+remote: error: GH013: Repository rule violations found for refs/heads/develop.
+remote: Push cannot contain secrets
+```
+
+這代表 GitHub 已經偵測到 commit 歷史中含有敏感資訊。
+
+## 方法：用 `git rebase --onto` 刪掉 commit
+
+### 1️⃣ 切換到 develop 分支
+
+```bash
+git checkout develop
+```
+
+確認你在正確的分支上。
+
+### 2️⃣ 刪掉指定 commit
+
+假設要刪掉的 commit hash 是 `2cf88f0`（前 7 位即可）：
+
+```bash
+git rebase --onto 2cf88f0^ 2cf88f0
+```
+
+- `2cf88f0^` 表示該 commit 的上一個 commit
+- 這個操作會把 `2cf88f0` 從歷史中移除，保留其他 commit。
+
+如果 rebase 過程中遇到衝突：
+
+1. 編輯衝突檔案解決問題
+2. 標記為已解決：
+
+```bash
+git add <檔案>
+```
+
+3. 繼續 rebase：
+
+```bash
+git rebase --continue
+```
+
+### 3️⃣ 強制推送到遠端
+
+因為歷史已經改變，需要使用 `--force` 推送：
+
+```bash
+git push origin develop --force
+```
+
+這樣 GitHub 上的 `develop` 分支也會刪掉該 commit，不再被 push protection 阻擋。
+
+## 注意事項
+
+### 1. 安全性
+
+- 請務必 **revoke 已暴露的敏感資訊** 或 API Key，避免安全風險。
+- 以後敏感資訊不要直接 commit，可以使用 `.env`、Vault 或 Secret Manager。
+
+### 2. 影響其他開發者
+
+- 使用 `--force` 會改變 commit hash。
+- 如果其他人也在使用 `develop` branch，他們需要重新 clone 或使用：
+
+```bash
+git fetch && git reset --hard origin/develop
+```
+
+### 3. 歷史敏感資訊清理
+
+- 如果 repo 有多個含秘密 commit，建議使用 `git filter-repo` 來批量清理。
+
+## 小結
+
+透過 `git rebase --onto` 可以快速刪掉單個含秘密的 commit，並安全 push 到遠端。 這是保護敏感資訊、避免 push 被拒的重要方法。
+
+如果你願意，我可以幫你加上一個 **進階版**，同時示範如何用 `git filter-repo` 批量刪掉整個 repo 歷史中所有敏感資訊，適合有多個敏感 commit 的情況。
