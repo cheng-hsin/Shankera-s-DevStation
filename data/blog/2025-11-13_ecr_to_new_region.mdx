@@ -1,0 +1,104 @@
+---
+title: '將 ECR Image 推到新區域（Region）的完整流程'
+date: '2025-09-30'
+lastmod: '2025-11-13'
+tags: ['aws', 'docker', 'ecr']
+draft: false
+summary: '本文介紹如何將 ECR 中的 Docker image 推送到另一個區域。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+在 AWS 中，如果需要將某個 ECR（Elastic Container Registry）中的 Docker image 推到另一個區域，主要流程如下：拉取 → 打 tag → 登入 → 推送。
+
+以下以實際範例說明。
+
+---
+
+## 前提條件
+
+1. 已安裝 **AWS CLI**
+2. 已安裝 **Docker**
+3. 已有 AWS 帳號並設定好 `aws configure`
+4. 目標 ECR repository 在新區域已存在（如尚未建立，可先建立）
+
+---
+
+## 1️⃣ 從舊區域拉取 image
+
+假設舊區域為 `ap-northeast-1`，image 名稱為 `atrix/exchange-api:3.0.145`：
+
+```bash
+aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-northeast-1.amazonaws.com
+docker pull 123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/atrix/exchange-api:3.0.145
+```
+
+![image](https://hackmd.io/_uploads/SkZoKApaxg.png)
+
+---
+
+## 2️⃣ 給 image 打上新區域 tag
+
+假設新區域為 `ap-east-2`，新的 repository 名稱仍為 `atrix/exchange-api`：
+
+```bash
+docker tag 123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/atrix/exchange-api:3.0.145 123456789012.dkr.ecr.ap-east-2.amazonaws.com/atrix/exchange-api:3.0.145
+```
+
+---
+
+## 3️⃣ 登入新區域 ECR
+
+```bash
+aws ecr get-login-password --region ap-east-2 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-east-2.amazonaws.com
+```
+
+登入成功會顯示：
+
+```
+Login Succeeded
+```
+
+---
+
+## 4️⃣ 推送到新區域
+
+```bash
+docker push 123456789012.dkr.ecr.ap-east-2.amazonaws.com/atrix/exchange-api:3.0.145
+```
+
+推送完成後，image 就會出現在新區域的 ECR repository 中。
+
+---
+
+## ⚠️ 注意事項
+
+1. **新區域的 repository 必須先建立**
+
+```bash
+aws ecr create-repository --repository-name atrix/exchange-api --region ap-east-2
+```
+
+2. **IAM 權限要求**
+
+   - 使用者必須擁有以下 ECR 權限：
+
+     ```
+     ecr:GetAuthorizationToken
+     ecr:BatchCheckLayerAvailability
+     ecr:GetDownloadUrlForLayer
+     ecr:BatchGetImage
+     ecr:PutImage
+     ecr:InitiateLayerUpload
+     ecr:UploadLayerPart
+     ecr:CompleteLayerUpload
+     ```
+
+3. **Token 過期問題**
+
+   - ECR 登入 token 只有效 12 小時，若拉取或推送失敗請重新登入：
+
+     ```bash
+     aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account>.dkr.ecr.<region>.amazonaws.com
+     ```
