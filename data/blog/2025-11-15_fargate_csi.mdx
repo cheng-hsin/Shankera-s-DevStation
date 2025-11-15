@@ -1,0 +1,68 @@
+---
+title: '每次問 AI 都說 Fargate 不支援卷，其實只要 CSI 微調就好'
+date: '2025-11-15'
+lastmod: '2025-11-15'
+tags: ['kubernetes', 'fargate', 'efs', 'csi']
+draft: false
+summary: 'EKS Fargate 環境下，PVC 綁定失敗不是因為不支援卷，而是 CSI Driver 需要微調。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+最近在用 **EKS Fargate + Vault + EFS CSI Driver**，遇到一個超煩的錯誤。
+部署 Vault 後，Pod 一直卡在 `Pending`，看 Events：
+
+```
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  10m   fargate-scheduler  Pod not supported on Fargate: volumes not supported: data not supported because: PVC data-vault-0 not bound
+```
+
+我問 AI（ChatGPT 等），它一致回答：
+
+> “这个错误表明您的 Kubernetes Pod 尝试使用 AWS Fargate 不支持的卷类型。
+> Fargate 对可以使用的卷类型有限制。”
+
+聽起來很合理，但其實 **問題核心不在不能用 Fargate**。
+
+---
+
+## 真正原因 💡
+
+PVC 無法綁定，主要是 **EFS CSI Driver 的一些選項需要微調**。
+Fargate 環境下，如果保持一些預設設定（例如 node driver registrar、node component 等），
+PVC 就可能卡在 `Pending`，Pod 無法啟動。
+
+---
+
+## 微調就解決 ✅
+
+只要重新部署 CSI Driver，**把 node 相關選項設成 false**，就可以解決：
+
+```bash
+helm upgrade --install aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver \
+  --namespace kube-system \
+  --set controller.replicas=2 \
+  --set node.enabled=false \
+  --set sidecars.nodeDriverRegistrar.enabled=false \
+  --set controller.securityContext.privileged=false \
+  --set controller.containerSecurityContext.privileged=false \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=efs-csi-controller-sa \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::XXXX:role/AmazonEKS_EFS_CSI_DriverRole_taiwan"
+```
+
+- 不用大改設定，也不用重建 StorageClass。
+- PVC 立刻綁定成功，Vault Pods 全部啟動 🚀
+
+---
+
+## 小結 📘
+
+AI 每次都說 Fargate 不支援卷，其實只是 **微調 CSI Driver 就能解決問題**。
+提醒大家：
+
+- ❌ 不要一聽錯誤訊息就以為真的不能用 Fargate
+- ✅ 仔細分析實際原因，往往只需微調即可
