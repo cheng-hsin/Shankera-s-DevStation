@@ -1,0 +1,141 @@
+---
+title: '如何將一個 EFS 的資料複製到另一個 EFS'
+date: '2025-11-18'
+lastmod: '2025-11-18'
+tags: ['aws', 'ec2', 'efs', 'storage']
+draft: false
+summary: '在 EC2 環境下，如何將一個 EFS 的資料複製到另一個 EFS。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+在 AWS 環境中，有時候我們需要把一個 **EFS（Elastic File System）** 上的資料備份或遷移到另一個 EFS。這篇文章會教你如何用 **EC2 + rsync** 方式完成複製，簡單、可靠，而且可以保留檔案權限與時間戳。
+
+---
+
+## 前置條件
+
+1. 你有兩個已建立的 EFS：
+
+   - 來源 EFS：例如 `/efs/mnt/efs_staging`
+   - 目標 EFS：例如 `/efs/mnt/efs_staging_taiwan`
+
+2. 一台可以掛載兩個 EFS 的 EC2，安全組允許 NFS (2049) 通訊
+3. 已安裝 `rsync`（大部分 Linux AMI 預設都有）
+
+---
+
+## 1️⃣ 掛載 EFS
+
+假設你已經在 EC2 上建立了掛載點，可以先確認目錄：
+
+```bash
+sudo mkdir -p /efs/mnt/efs_staging
+sudo mkdir -p /efs/mnt/efs_staging_taiwan
+```
+
+接著掛載兩個 EFS：
+
+```bash
+# 掛載來源 EFS
+sudo mount -t efs fs-來源ID:/ /efs/mnt/efs_staging
+
+# 掛載目標 EFS
+sudo mount -t efs fs-目標ID:/ /efs/mnt/efs_staging_taiwan
+```
+
+---
+
+## 2️⃣ 建立目標資料夾
+
+假設我們要把來源資料夾：
+
+```
+/efs/mnt/efs_staging/aws-backup-restore_2025-11-06T06-23-04-435977917Z/atrix-staging
+```
+
+複製到目標 EFS 的資料夾：
+
+```
+/efs/mnt/efs_staging_taiwan/atrix-staging-taiwan
+```
+
+先建立目標資料夾：
+
+```bash
+sudo mkdir -p /efs/mnt/efs_staging_taiwan/atrix-staging-taiwan
+```
+
+`-p` 可以自動建立多層資料夾，如果資料夾已存在也不會報錯。
+
+---
+
+## 3️⃣ 使用 rsync 複製資料
+
+接下來用 `rsync` 複製資料夾內容：
+
+```bash
+sudo rsync -avh --progress \
+/efs/mnt/efs_staging/aws-backup-restore_2025-11-06T06-23-04-435977917Z/atrix-staging/ \
+/efs/mnt/efs_staging_taiwan/atrix-staging-taiwan/
+```
+
+### 參數說明：
+
+- `-a`：保留權限、時間戳、符號連結等
+- `-v`：顯示複製過程
+- `-h`：以易讀格式顯示檔案大小
+- `--progress`：顯示進度
+- `/`（來源路徑末尾）很重要：
+
+  - `/atrix-staging/` → 只複製裡面的內容
+  - 沒有 `/` → 會連資料夾本身一起複製
+
+---
+
+## 4️⃣ 建議先 Dry-run 模擬
+
+在正式複製之前，可以先用 `--dry-run` 模擬一次，確認資料會複製到正確位置：
+
+```bash
+sudo rsync -avh --progress --dry-run \
+/efs/mnt/efs_staging/aws-backup-restore_2025-11-06T06-23-04-435977917Z/atrix-staging/ \
+/efs/mnt/efs_staging_taiwan/atrix-staging-taiwan/
+```
+
+確認沒問題後，再移除 `--dry-run` 執行正式同步。
+
+---
+
+## 5️⃣ 把複製過來的資料夾，同步到每個 staging-taiwan 資料夾
+
+用 GPT 生成指令
+
+```
+我有一個目錄，例如 /efs/mnt/efs_staging_taiwan，裡面有以下資料夾：
+[貼上你在 staging-taiwan 裡的 ls 結果]
+
+其中有些資料夾是來源資料夾，例如：
+- atrix-staging-mongodb
+- data-atrix-staging-kafka-controller-0
+- data-atrix-staging-kafka-controller-1
+- data-atrix-staging-kafka-controller-2
+- redis-data-atrix-staging-redis-master-0
+
+對應的目標資料夾名稱是：
+- atrix-staging-taiwan-mongodb
+- data-atrix-staging-taiwan-kafka-controller-0
+- data-atrix-staging-taiwan-kafka-controller-1
+- data-atrix-staging-taiwan-kafka-controller-2
+- redis-data-atrix-staging-taiwan-redis-master-0
+
+請生成一組 rsync 指令，把來源資料夾的內容同步到對應的目標資料夾，每個資料夾一行指令，保留權限和時間戳。只同步已存在的目標資料夾，不創建新的。
+```
+
+## 5️⃣ 小提醒
+
+- 目標 EFS 空間需足夠
+- 大量資料建議在流量低峰時執行
+- 可用 `--partial` 避免中斷重傳
+- 若有需要，也可以用 **AWS DataSync** 做大規模自動化同步
