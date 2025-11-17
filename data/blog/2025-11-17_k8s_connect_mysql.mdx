@@ -1,0 +1,123 @@
+---
+title: 'Kubernetes 連接 AWS RDS MySQL 指南'
+date: '2025-11-17'
+lastmod: '2025-11-17'
+tags: ['kubernetes', 'aws', 'rds', 'mysql']
+draft: false
+summary: '在 Kubernetes 環境下，如何連接 AWS RDS MySQL。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+## 一、建立 MySQL Client Pod
+
+```bash
+# 建立 pod
+kubectl run mysql-client --image=mysql:8.0 --restart=Never -- sleep 3600
+
+# 進入 pod
+kubectl exec -it mysql-client -- bash
+```
+
+## 二、安裝診斷工具並測試連接
+
+```bash
+# 安裝網路工具
+microdnf install -y nc telnet bind-utils
+
+# 測試 DNS
+nslookup your-rds-endpoint.rds.amazonaws.com
+
+# 測試 port 3306 連通性
+nc -zv your-rds-endpoint.rds.amazonaws.com 3306
+```
+
+**如果 nc 卡住或 timeout**：表示 Security Group 未開放
+
+## 三、修復 Security Group
+
+進入 AWS RDS Console：
+
+1. 選擇你的 DB Instance
+2. **Connectivity & security** → 點擊 Security Group
+3. **Edit inbound rules** → 新增規則：
+   - Type: `MySQL/Aurora (3306)`
+   - Source: `10.10.0.0/16` 或選擇 EKS Node Security Group
+4. 儲存
+
+## 四、連接 MySQL
+
+```bash
+# 連接 RDS
+mysql -h your-rds-endpoint.rds.amazonaws.com -P 3306 -u admin -p
+
+# 實際範例
+mysql -h atrix-staging-taiwan.c5oa08imewcm.ap-east-2.rds.amazonaws.com -P 3306 -u admin -p
+```
+
+**常見錯誤**：
+
+- 卡住無反應 → Security Group 未開放
+- `Access denied` → 使用者名稱或密碼錯誤
+
+## 五、建立新使用者
+
+```sql
+-- 建立使用者
+CREATE USER 'atrixuser'@'%' IDENTIFIED BY 'your-password';
+
+-- 授予權限
+GRANT ALL PRIVILEGES ON atrix.* TO 'atrixuser'@'%';
+
+-- 套用變更
+FLUSH PRIVILEGES;
+
+-- 驗證
+SHOW GRANTS FOR 'atrixuser'@'%';
+```
+
+## 六、常用 SQL 指令
+
+```sql
+-- 查看資料庫
+SHOW DATABASES;
+
+-- 切換資料庫
+USE atrix;
+
+-- 查看資料表
+SHOW TABLES;
+
+-- 查詢資料
+SELECT * FROM table_name LIMIT 10;
+
+-- 離開
+exit;
+```
+
+## 疑難排解檢查清單
+
+1. ✅ DNS 能解析？ → `nslookup`
+2. ✅ Port 3306 通？ → `nc -zv`
+3. ✅ Security Group 開放？ → AWS Console 檢查
+4. ✅ 使用者密碼正確？ → 嘗試連接
+
+## 快速指令參考
+
+```bash
+# 完整流程（一行一行執行）
+kubectl run mysql-client --image=mysql:8.0 --restart=Never -- sleep 3600
+kubectl exec -it mysql-client -- bash
+microdnf install -y nc telnet bind-utils
+nc -zv your-rds-endpoint 3306
+mysql -h your-rds-endpoint -P 3306 -u admin -p
+```
+
+## 安全建議
+
+- ✅ Security Group 只開放給 EKS Node Security Group
+- ✅ 應用程式使用專屬使用者，不要用 master user
+- ✅ 密碼儲存在 AWS Secrets Manager
+- ❌ 不要開放 `0.0.0.0/0`
+- ❌ 不要給應用使用者 ALL PRIVILEGES
