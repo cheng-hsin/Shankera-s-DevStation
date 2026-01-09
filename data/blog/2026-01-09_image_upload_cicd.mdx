@@ -1,0 +1,115 @@
+---
+title: 'Docker Image 上版說明'
+date: '2026-01-09'
+lastmod: '2026-01-09'
+tags: ['cicd', 'docker', 'aws', 'ecr', 'image']
+draft: false
+summary: '說明如何將 Docker Image 上傳到 AWS ECR 的 CI/CD 流程。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+### 上版類型
+
+Docker Image 上版（推送至 AWS ECR）
+
+### 版本資訊
+
+- Image Version：`1.0.0`
+- Tag：`latest`
+- Registry：AWS ECR（ap-northeast-1）
+
+### 上版內容說明
+
+本次上版將既有 Docker image（v1.0.0）載入本地環境後，重新標記並推送至 AWS ECR，作為後續服務或排程任務使用的最新版本。
+
+---
+
+## 一、既有版本上版流程
+
+1. **載入 Docker Image**
+
+   ```bash
+   docker load -i <image-name>-1.0.0.tar
+   ```
+
+2. **重新標記 Image**
+
+   ```bash
+   docker tag <image-name>:1.0.0 <ecr-repo>:latest
+   ```
+
+3. **登入 AWS ECR**
+
+   ```bash
+   aws ecr get-login-password --region ap-northeast-1 | \
+   docker login --username AWS --password-stdin <ecr-repo>
+   ```
+
+4. **推送 Image 至 ECR**
+
+   ```bash
+   docker push <ecr-repo>:latest
+   ```
+
+---
+
+## 二、新版本上傳流程（如有新版本釋出）
+
+當有新版本 Docker image（例如 `1.0.1`、`1.1.0`）時，請依以下流程進行：
+
+1. **載入新版本 Image**
+
+   ```bash
+   docker load -i <image-name>-<new-version>.tar
+   ```
+
+2. **標記新版本 Tag**
+
+   ```bash
+   docker tag <image-name>:<new-version> <ecr-repo>:<new-version>
+   ```
+
+3. **（選擇性）更新 latest Tag**
+
+   - 若確認新版本為穩定版本，可同步更新 `latest`
+
+   ```bash
+   docker tag <image-name>:<new-version> <ecr-repo>:latest
+   ```
+
+4. **登入 AWS ECR**
+
+   ```bash
+   aws ecr get-login-password --region ap-northeast-1 | \
+   docker login --username AWS --password-stdin <ecr-repo>
+   ```
+
+5. **推送新版本 Image**
+
+   ```bash
+   docker push <ecr-repo>:<new-version>
+   ```
+
+6. **（如有更新 latest）推送 latest**
+
+   ```bash
+   docker push <ecr-repo>:latest
+   ```
+
+---
+
+## 上版結果
+
+- Docker image 已成功推送至 AWS ECR
+- 明確版本 tag 與 `latest`（如適用）已更新
+- 可供後續 ECS / 排程任務 / 服務部署使用
+
+---
+
+## 備註
+
+- 建議所有上版皆保留「明確版本號 tag」，避免僅使用 `latest`
+- 發生異常時可快速回滾至舊版 image tag
+- 本次流程僅涉及 Image 更新，不影響基礎設施設定
