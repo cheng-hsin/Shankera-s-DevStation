@@ -1,0 +1,208 @@
+---
+title: 'Docker 網路與容器互通完整指南（圖解版）'
+date: '2025-11-28'
+lastmod: '2025-11-28'
+tags: ['Docker', 'network', 'container']
+draft: false
+summary: '本文圖解 Docker 網路與容器互通概念，包含 Port 映射、自訂 bridge network、Docker Compose 網路等，幫助理解與實務操作。'
+layout: PostSimple
+bibliography: references-data.bib
+canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1/
+---
+
+學 Docker 時，常常會卡在 **網路、Port 映射、容器互通** 的概念，像 `-p 8080:80`、bridge network 或 Docker Compose 網路。這篇文章用**圖解方式**，把概念整理清楚，方便實務操作。
+
+---
+
+## 1️⃣ Docker 容器、宿主機與 Port 映射
+
+每個 Docker 容器都是一個獨立的小世界，外部訪問容器需要通過宿主機端口映射。
+
+```bash
+docker run -d -p 8080:80 nginx
+```
+
+- 宿主機端口：8080
+- 容器內端口：80
+- 外部訪問 `localhost:8080` → 會進入容器內的 Nginx 80
+
+**示意圖：**
+
+```
+外部瀏覽器/客戶端
+        │
+        ▼
+    宿主機 Host
+    ┌───────────┐
+    │ Port 8080 │
+    │ ┌───────┐ │
+    │ │容器 A │ │
+    │ │nginx 80│ │
+    │ └───────┘ │
+    └───────────┘
+```
+
+> 左側是宿主機端口，右側是容器內部端口
+
+---
+
+## 2️⃣ 容器內部互通
+
+### 2-1 預設 bridge network
+
+- Docker 預設容器在 **bridge network**
+- 容器之間可以互通，但只能用 **IP**，名稱不能直接互通
+- 多容器應用不方便管理
+
+```
+預設 bridge network
+容器 A (IP 172.17.0.2)  <--互通-->  容器 B (IP 172.17.0.3)
+```
+
+---
+
+### 2-2 自訂 bridge network（最常用）
+
+```bash
+docker network create mynet
+docker run -d --name app1 --network mynet nginx
+docker run -d --name app2 --network mynet mysql
+```
+
+- 容器名稱可以直接互通（DNS）
+- 宿主機不需要映射 port 也可以互通
+- 適合隔離一組容器群組
+
+**示意圖：**
+
+```
+        自訂 bridge network "mynet"
+        ┌───────────────┐
+        │  容器 app1    │
+        │  nginx 80     │
+        └───────────────┘
+               │
+               │ 名稱互通
+               ▼
+        ┌───────────────┐
+        │  容器 app2    │
+        │  mysql 3306   │
+        └───────────────┘
+```
+
+- app1 可以直接 `curl http://app2:3306`
+- 不需要外部 port 映射
+
+---
+
+### 2-3 Docker Compose 自動管理網路
+
+Docker Compose 會自動建立 network，容器名稱互通：
+
+```yaml
+version: '3'
+services:
+  web:
+    image: nginx
+  db:
+    image: mysql
+```
+
+- web 可以直接用 `db:3306` 連 mysql
+- 不需要手動建立 network
+
+**示意圖：**
+
+```
+Compose network
+┌───────────────┐
+│  web (nginx)  │
+│  name=web     │
+└─────┬─────────┘
+      │ 名稱互通
+      ▼
+┌───────────────┐
+│  db (mysql)   │
+│  name=db      │
+└───────────────┘
+```
+
+---
+
+### 2-4 已啟動容器互通
+
+如果容器已經啟動，也可以加入同一個 network：
+
+```bash
+docker network create mynet
+docker network connect mynet app1
+docker network connect mynet app2
+```
+
+**示意圖：**
+
+```
+已啟動容器加入自訂 network
+┌───────────┐      ┌───────────┐
+│  app1     │ <--> │  app2     │
+│  nginx    │      │  mysql    │
+└───────────┘      └───────────┘
+        │
+      mynet network
+```
+
+- 不需要重新 run
+- 容器名稱可以直接互通
+
+---
+
+## 3️⃣ Host network
+
+- 容器共用宿主機網路
+- 優點：速度快
+- 缺點：沒隔離，宿主機端口就是容器端口
+
+---
+
+## 4️⃣ 什麼情況需要 bridge network
+
+1. 多個容器要互通（Web + DB + Cache）
+2. 想隔離容器群組
+3. 不想暴露 port 到宿主機，只需要內部通訊
+
+> 簡單說：bridge 就像容器的小 LAN，容器在同一個 bridge 上就能互通
+
+---
+
+## 5️⃣ 總結圖解
+
+```
+外部瀏覽器/客戶端
+        │
+        ▼
+宿主機 Host
+┌───────────────────────────┐
+│  Port 映射 (-p)           │
+│  8080 → 容器 A nginx 80   │
+│                           │
+│  自訂 bridge network "mynet"
+│   ┌───────────────┐
+│   │ 容器 A nginx  │ <──名稱互通──> 容器 B mysql
+│   └───────────────┘
+└───────────────────────────┘
+```
+
+- 外部訪問 → Port 映射
+- 容器內互通 → 自訂 bridge 或 Docker Compose
+- 預設 bridge → IP 互通，不方便名稱互通
+- Host network → 高效但不隔離
+
+---
+
+這篇文章就是 **完整圖解版 Docker 網路與容器互通筆記**，一次涵蓋：
+
+- 外部訪問
+- 容器名稱互通
+- 預設 bridge vs 自訂 bridge
+- Docker Compose 自動 network
+- 已啟動容器加入 network
