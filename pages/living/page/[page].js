@@ -2,7 +2,8 @@ import { PageSEO } from '@/components/SEO'
 import siteMetadata from '@/data/siteMetadata'
 import { getAllFilesFrontMatter } from '@/lib/mdx'
 import ListLayout from '@/layouts/ListLayout'
-import { POSTS_PER_PAGE } from '../living'
+
+export const POSTS_PER_PAGE = 5
 
 export async function getStaticPaths() {
   const totalPosts = await getAllFilesFrontMatter('living')
@@ -50,6 +51,7 @@ export default function PostPage({ posts, initialDisplayPosts, pagination }) {
         initialDisplayPosts={initialDisplayPosts}
         pagination={pagination}
         title="Living 🌱"
+        basePath="living"
       />
     </>
   )
