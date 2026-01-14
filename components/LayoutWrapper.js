@@ -1,52 +1,42 @@
 import siteMetadata from '@/data/siteMetadata'
 import headerNavLinks from '@/data/headerNavLinks'
-import Logo from '@/data/logo.svg'
 import Link from './Link'
 import SectionContainer from './SectionContainer'
 import Footer from './Footer'
 import MobileNav from './MobileNav'
-import ThemeSwitch from './ThemeSwitch'
 
 const LayoutWrapper = ({ children }) => {
   return (
     <SectionContainer>
-      <div className="flex h-screen flex-col justify-between">
-        <header className="flex items-center justify-between py-10">
-          <div>
+      <div className="flex h-screen flex-col">
+        <header className="kawaii-header sticky top-0 z-50 px-4 py-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between">
             <Link href="/" aria-label={siteMetadata.headerTitle}>
-              <div className="flex items-center justify-between">
-                <div className="mr-3">
-                  {/* <Logo /> */}
+              <div className="flex items-center gap-3">
+                <div className="float-icon">
                   <img
                     src="/static/favicons/apple-touch-icon.png"
-                    alt="anpanman"
-                    className="h-8 w-8"
+                    alt="logo"
+                    className="h-10 w-10 rounded-full border-2 border-purple-300"
                   />
                 </div>
-                {typeof siteMetadata.headerTitle === 'string' ? (
-                  <div className="hidden h-6 text-2xl font-semibold sm:block">
-                    {siteMetadata.headerTitle}
-                  </div>
-                ) : (
-                  siteMetadata.headerTitle
-                )}
+                <span className="gradient-text text-xl font-bold">{siteMetadata.headerTitle}</span>
               </div>
             </Link>
-          </div>
-          <div className="flex items-center text-base leading-5">
-            <div className="hidden sm:block">
-              {headerNavLinks.map((link) => (
-                <Link
-                  key={link.title}
-                  href={link.href}
-                  className="p-1 font-medium text-gray-900 dark:text-gray-100 sm:p-4"
-                >
-                  {link.title}
-                </Link>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="hidden gap-1 sm:flex">
+                {headerNavLinks.map((link) => (
+                  <Link
+                    key={link.title}
+                    href={link.href}
+                    className="rounded-full px-4 py-2 text-sm font-medium text-purple-700 transition-all hover:bg-purple-50"
+                  >
+                    {link.title}
+                  </Link>
+                ))}
+              </div>
+              <MobileNav />
             </div>
-            <ThemeSwitch />
-            <MobileNav />
           </div>
         </header>
         <main className="mb-auto">{children}</main>

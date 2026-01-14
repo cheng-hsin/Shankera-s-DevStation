@@ -14,56 +14,41 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
     <SectionContainer>
       <BlogSEO url={`${siteMetadata.siteUrl}/blog/${frontMatter.slug}`} {...frontMatter} />
       <ScrollTopAndComment />
-      <article>
+      <article className="kawaii-card my-8 mx-auto max-w-4xl p-8">
         <div>
           <header>
-            <div className="space-y-1 border-b border-gray-200 pb-10 text-center dark:border-gray-700">
+            <div className="space-y-4 border-b-2 border-purple-200 pb-6 text-center">
               <dl>
                 <div>
                   <dt className="sr-only">Published on</dt>
-                  <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                    <time dateTime={date}>{formatDate(date)}</time>
+                  <dd className="text-base font-bold text-purple-500">
+                    📅 <time dateTime={date}>{formatDate(date)}</time>
                   </dd>
                 </div>
               </dl>
               <div>
-                <PageTitle>{title}</PageTitle>
+                <h1 className="gradient-text text-3xl font-bold md:text-4xl">{title}</h1>
               </div>
             </div>
           </header>
-          <div
-            className="divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:divide-y-0 "
-            style={{ gridTemplateRows: 'auto 1fr' }}
-          >
-            <div className="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
-              <div className="prose max-w-none pt-10 pb-8 dark:prose-dark">{children}</div>
-            </div>
-            <Comments frontMatter={frontMatter} />
-            <footer>
-              <div className="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
-                {prev && (
-                  <div className="pt-4 xl:pt-8">
-                    <Link
-                      href={`/blog/${prev.slug}`}
-                      className="text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    >
-                      &larr; {prev.title}
-                    </Link>
-                  </div>
-                )}
-                {next && (
-                  <div className="pt-4 xl:pt-8">
-                    <Link
-                      href={`/blog/${next.slug}`}
-                      className="text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    >
-                      {next.title} &rarr;
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </footer>
+          <div className="mt-8">
+            <div className="prose prose-lg max-w-none">{children}</div>
           </div>
+          <Comments frontMatter={frontMatter} />
+          <footer className="mt-8 border-t-2 border-purple-200 pt-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+              {prev && (
+                <Link href={`/blog/${prev.slug}`} className="kawaii-btn text-center">
+                  ← {prev.title}
+                </Link>
+              )}
+              {next && (
+                <Link href={`/blog/${next.slug}`} className="kawaii-btn text-center">
+                  {next.title} →
+                </Link>
+              )}
+            </div>
+          </footer>
         </div>
       </article>
     </SectionContainer>

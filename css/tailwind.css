@@ -2,24 +2,208 @@
 @tailwind components;
 @tailwind utilities;
 
-.task-list-item::before {
-  @apply hidden;
+@layer base {
+  html {
+    background: linear-gradient(180deg, #fef5ff 0%, #f0f8ff 100%) !important;
+    min-height: 100vh;
+  }
+
+  body {
+    background: transparent !important;
+    color: #4a4a4a !important;
+    font-size: 13px;
+  }
+
+  pre {
+    background-color: #fff !important;
+    border: 2px solid #e8d5f2 !important;
+    border-radius: 8px !important;
+  }
+
+  code {
+    background-color: #fef5ff !important;
+    color: #c084fc !important;
+    border-radius: 4px;
+  }
 }
 
-.task-list-item {
-  @apply list-none;
+/* Kawaii Japanese Style */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
-.footnotes {
-  @apply pt-8 mt-12 border-t border-gray-200 dark:border-gray-700;
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
 }
 
-.csl-entry {
-  @apply my-5;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* https://stackoverflow.com/questions/61083813/how-to-avoid-internal-autofill-selected-style-to-be-applied */
-input:-webkit-autofill,
-input:-webkit-autofill:focus {
-  transition: background-color 600000s 0s, color 600000s 0s;
+.kawaii-card {
+  background: #ffffff !important;
+  border: 2px solid #e8d5f2 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(200, 132, 252, 0.15) !important;
+  transition: all 0.3s ease;
+  animation: slideIn 0.4s ease-out;
+}
+
+.kawaii-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(200, 132, 252, 0.25) !important;
+  border-color: #d8b4fe !important;
+}
+
+.kawaii-header {
+  background: linear-gradient(135deg, #fef5ff 0%, #f0f8ff 100%) !important;
+  border-bottom: 3px solid #e8d5f2 !important;
+  box-shadow: 0 2px 8px rgba(200, 132, 252, 0.1);
+}
+
+.kawaii-sidebar {
+  background: linear-gradient(135deg, #ffffff 0%, #fef5ff 100%) !important;
+  border: 2px solid #e8d5f2 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(200, 132, 252, 0.1);
+}
+
+.kawaii-tag {
+  background: linear-gradient(135deg, #fef5ff 0%, #f0f8ff 100%) !important;
+  border: 2px solid #e8d5f2 !important;
+  color: #9333ea !important;
+  border-radius: 20px !important;
+  transition: all 0.2s;
+}
+
+.kawaii-tag:hover {
+  background: linear-gradient(135deg, #e8d5f2 0%, #d8b4fe 100%) !important;
+  transform: scale(1.05);
+}
+
+.kawaii-btn {
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 20px !important;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+  transition: all 0.3s;
+}
+
+.kawaii-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+}
+
+.kawaii-link {
+  color: #a855f7 !important;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.kawaii-link:hover {
+  color: #c084fc !important;
+  text-decoration: underline;
+}
+
+.sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.float-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Decorative elements */
+.deco-dots {
+  background-image: radial-gradient(circle, #e8d5f2 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Prose */
+.prose {
+  color: #4a4a4a !important;
+  max-width: none;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: #7c3aed !important;
+  font-weight: 700;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #9333ea !important;
+  font-weight: 600;
+}
+
+.prose a {
+  color: #a855f7 !important;
+  text-decoration: none;
+  border-bottom: 2px solid #e8d5f2;
+  transition: all 0.2s;
+}
+
+.prose a:hover {
+  color: #c084fc !important;
+  border-bottom-color: #d8b4fe;
+}
+
+.prose strong {
+  color: #7c3aed !important;
+  font-weight: 600;
+}
+
+.prose blockquote {
+  border-left: 4px solid #d8b4fe !important;
+  background: linear-gradient(135deg, #fef5ff 0%, #ffffff 100%) !important;
+  color: #6b7280 !important;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin: 0.5em 0;
 }
