@@ -52,7 +52,7 @@ export default function ListLayout({
                     </Link>
                   </h2>
                   <span className="whitespace-nowrap text-xs font-medium text-purple-500">
-                    📅 {formatDate(date).split(',')[0]}
+                    📅 {formatDate(date)}
                   </span>
                 </div>
                 <p className="line-clamp-2 mb-2 text-xs leading-relaxed text-gray-600">{summary}</p>
