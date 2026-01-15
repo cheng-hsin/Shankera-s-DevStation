@@ -22,11 +22,12 @@ export async function getStaticProps({ params }) {
 }
 
 export default function Living({ post }) {
-  const { mdxSource, frontMatter } = post
+  const { mdxSource, toc, frontMatter } = post
 
   return (
     <MDXLayoutRenderer
       layout={frontMatter.layout || DEFAULT_LAYOUT}
+      toc={toc}
       mdxSource={mdxSource}
       frontMatter={frontMatter}
     />

@@ -24,6 +24,13 @@ const CommonSEO = ({ title, description, ogType, ogImage, twImage, canonicalUrl 
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={twImage} />
+      {siteMetadata.twitter && (
+        <meta
+          name="twitter:creator"
+          content={siteMetadata.twitter.replace('https://twitter.com/', '@')}
+        />
+      )}
+      <meta property="og:locale" content={siteMetadata.locale || 'en-US'} />
       <link
         rel="canonical"
         href={canonicalUrl ? canonicalUrl : `${siteMetadata.siteUrl}${router.asPath}`}
@@ -79,6 +86,7 @@ export const BlogSEO = ({
   lastmod,
   url,
   images = [],
+  tags = [],
   canonicalUrl,
 }) => {
   const router = useRouter()
@@ -151,6 +159,12 @@ export const BlogSEO = ({
       <Head>
         {date && <meta property="article:published_time" content={publishedAt} />}
         {lastmod && <meta property="article:modified_time" content={modifiedAt} />}
+        {authorDetails && authorDetails.length > 0 && (
+          <meta property="article:author" content={authorDetails[0].name} />
+        )}
+        {tags &&
+          tags.length > 0 &&
+          tags.map((tag, idx) => <meta key={idx} property="article:tag" content={tag} />)}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
