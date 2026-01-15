@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -8,6 +8,40 @@ export default function ManagePosts() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/list-posts')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      console.log('Posts data:', data)
+      setPosts(data.posts || [])
+    } catch (error) {
+      console.error('Error fetching posts:', error)
+      setPosts([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/check-auth')
+      if (response.ok) {
+        setIsAuthenticated(true)
+        await fetchPosts()
+      } else {
+        setIsAuthenticated(false)
+      }
+    } catch (error) {
+      setIsAuthenticated(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [fetchPosts])
 
   // 檢查是否已登錄
   useEffect(() => {
@@ -22,36 +56,8 @@ export default function ManagePosts() {
     }
   }, [router, checkAuth])
 
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/check-auth')
-      if (response.ok) {
-        setIsAuthenticated(true)
-        fetchPosts()
-      }
-    } catch (error) {
-      // 忽略錯誤
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleGitHubLogin = () => {
     window.location.href = '/api/github-login?returnTo=/manage-posts'
-  }
-
-  const fetchPosts = async () => {
-    try {
-      const response = await fetch('/api/list-posts')
-      const data = await response.json()
-      console.log('Posts data:', data)
-      setPosts(data.posts || [])
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-      alert('無法載入文章列表: ' + error.message)
-    } finally {
-      setLoading(false)
-    }
   }
 
   const handleDelete = async (fileName, category) => {
