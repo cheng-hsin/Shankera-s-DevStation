@@ -27,8 +27,8 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
         {...frontMatter}
       />
       <ScrollTopAndComment />
-      <div className="my-8 mx-auto max-w-7xl flex gap-8">
-        <article className="kawaii-card flex-1 max-w-6xl p-8">
+      <div className="my-8 mx-auto max-w-7xl flex flex-col xl:flex-row gap-8 px-4">
+        <article className="kawaii-card flex-1 max-w-6xl p-4 sm:p-6 md:p-8">
           <div>
             <header className="mb-8">
               <div className="space-y-4 text-center">
@@ -96,7 +96,9 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
                 </dl>
               </div>
               <div className="xl:col-span-3">
-                <div className="prose prose-lg mb-8 max-w-none">{children}</div>
+                <div className="prose prose-sm sm:prose-base lg:prose-lg mb-8 max-w-none break-words">
+                  {children}
+                </div>
                 <div className="mb-6 flex gap-4 text-sm font-bold">
                   <Link href={discussUrl(slug)} rel="nofollow" className="kawaii-link">
                     💬 Discuss on Twitter

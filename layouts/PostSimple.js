@@ -14,8 +14,8 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
     <SectionContainer>
       <BlogSEO url={`${siteMetadata.siteUrl}/blog/${frontMatter.slug}`} {...frontMatter} />
       <ScrollTopAndComment />
-      <div className="my-8 mx-auto max-w-7xl flex gap-8">
-        <article className="kawaii-card flex-1 max-w-4xl p-8">
+      <div className="my-8 mx-auto max-w-7xl flex flex-col xl:flex-row gap-8 px-4">
+        <article className="kawaii-card flex-1 max-w-4xl p-4 sm:p-6 md:p-8">
           <div>
             <header>
               <div className="space-y-4 border-b-2 border-purple-200 pb-6 text-center">
@@ -33,7 +33,9 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
               </div>
             </header>
             <div className="mt-8">
-              <div className="prose prose-lg max-w-none">{children}</div>
+              <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none break-words">
+                {children}
+              </div>
             </div>
             <Comments frontMatter={frontMatter} />
             <footer className="mt-8 border-t-2 border-purple-200 pt-8">
