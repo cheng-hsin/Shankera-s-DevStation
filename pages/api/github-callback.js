@@ -122,9 +122,9 @@ export default async function handler(req, res) {
     console.log('Cookie set, redirecting to', returnTo)
 
     // 7. 重定向到原本的頁面
-    return res.redirect(`${returnTo}?success=true`)
+    res.redirect(`${returnTo}?success=true`)
   } catch (error) {
     console.error('GitHub OAuth Error:', error)
-    return res.redirect('/admin?error=oauth_failed')
+    res.redirect('/admin?error=oauth_failed')
   }
 }

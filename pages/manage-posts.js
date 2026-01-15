@@ -46,15 +46,7 @@ export default function ManagePosts() {
   // 檢查是否已登錄
   useEffect(() => {
     checkAuth()
-    // 檢查 URL 參數中的錯誤或成功訊息
-    const urlParams = new URLSearchParams(window.location.search)
-    const successParam = urlParams.get('success')
-
-    if (successParam) {
-      checkAuth() // 重新檢查認證狀態
-      router.replace('/manage-posts', undefined, { shallow: true })
-    }
-  }, [router, checkAuth])
+  }, [])
 
   const handleGitHubLogin = () => {
     window.location.href = '/api/github-login?returnTo=/manage-posts'
