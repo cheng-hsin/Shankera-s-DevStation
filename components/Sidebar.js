@@ -1,31 +1,26 @@
 import Link from './Link'
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 
 export default function Sidebar() {
-  const [currentDate, setCurrentDate] = useState(new Date())
+  // 使用 useMemo 緩存日期計算，只在組件掛載時計算一次
+  // 日曆不需要實時更新，如果需要可以改為每小時更新
+  const currentDate = useMemo(() => new Date(), [])
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentDate(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const getDaysInMonth = (date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
+  const days = useMemo(() => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
     const firstDay = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days = []
+    const daysArray = []
 
     for (let i = 0; i < firstDay; i++) {
-      days.push(null)
+      daysArray.push(null)
     }
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i)
+      daysArray.push(i)
     }
-    return days
-  }
-
-  const days = getDaysInMonth(currentDate)
+    return daysArray
+  }, [currentDate])
   const weekDays = ['日', '月', '火', '水', '木', '金', '土']
   const today = currentDate.getDate()
 

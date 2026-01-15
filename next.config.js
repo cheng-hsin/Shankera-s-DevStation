@@ -74,8 +74,10 @@ module.exports = withBundleAnalyzer({
 
     if (!dev && !isServer) {
       // Replace React with Preact only in client production build
+      // Note: React 18+ uses different jsx-runtime path
       Object.assign(config.resolve.alias, {
         'react/jsx-runtime.js': 'preact/compat/jsx-runtime',
+        'react/jsx-dev-runtime.js': 'preact/compat/jsx-dev-runtime',
         react: 'preact/compat',
         'react-dom/test-utils': 'preact/test-utils',
         'react-dom': 'preact/compat',
