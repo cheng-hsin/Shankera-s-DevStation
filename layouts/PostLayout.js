@@ -8,7 +8,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/comments'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import { SidebarAd, InArticleAd, FooterAd } from '@/components/GoogleAds'
+// import { SidebarAd, InArticleAd, FooterAd } from '@/components/GoogleAds'
 
 const editUrl = (fileName) => `${siteMetadata.siteRepo}/blob/master/data/blog/${fileName}`
 const discussUrl = (slug) =>
@@ -100,8 +100,8 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
               </div>
               <div className="xl:col-span-3">
                 <div className="prose prose-lg mb-8 max-w-none overflow-x-auto">{children}</div>
-                {/* 文章內廣告 */}
-                <InArticleAd />
+                {/* 文章內廣告 - 暫時關閉，使用 Auto ads */}
+                {/* <InArticleAd /> */}
                 <div className="mb-6 flex gap-4 text-sm font-bold">
                   <Link href={discussUrl(slug)} rel="nofollow" className="kawaii-link">
                     💬 Discuss on Twitter
@@ -139,8 +139,8 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
                 </Link>
               </div>
             </footer>
-            {/* 頁面底部廣告 */}
-            <FooterAd />
+            {/* 頁面底部廣告 - 暫時關閉，使用 Auto ads */}
+            {/* <FooterAd /> */}
           </div>
         </article>
         {toc && toc.length > 0 && (
@@ -161,10 +161,10 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
                   ))}
                 </nav>
               </div>
-              {/* 側邊欄廣告 */}
-              <div className="mt-4">
+              {/* 側邊欄廣告 - 暫時關閉，使用 Auto ads */}
+              {/* <div className="mt-4">
                 <SidebarAd />
-              </div>
+              </div> */}
             </div>
           </aside>
         )}
