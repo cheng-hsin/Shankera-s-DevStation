@@ -5,13 +5,13 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 // You might need to insert additional domains in script-src if you are using external services
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app *.googletagmanager.com *.google-analytics.com *.googlesyndication.com *.googleadservices.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' giscus.app *.googletagmanager.com *.google-analytics.com *.googlesyndication.com *.googleadservices.com *.doubleclick.net *.google.com vercel.live *.vercel.live;
   style-src 'self' 'unsafe-inline';
-  img-src * blob: data: *.google-analytics.com *.googletagmanager.com *.googlesyndication.com *.googleadservices.com;
+  img-src * blob: data: *.google-analytics.com *.googletagmanager.com *.googlesyndication.com *.googleadservices.com *.doubleclick.net *.google.com;
   media-src 'none';
-  connect-src * *.google-analytics.com *.analytics.google.com *.googletagmanager.com *.googlesyndication.com;
+  connect-src * *.google-analytics.com *.analytics.google.com *.googletagmanager.com *.googlesyndication.com *.doubleclick.net *.google.com vercel.live *.vercel.live;
   font-src 'self';
-  frame-src giscus.app *.googlesyndication.com *.googleadservices.com
+  frame-src giscus.app *.googlesyndication.com *.googleadservices.com *.doubleclick.net *.google.com vercel.live *.vercel.live
 `
 
 const securityHeaders = [
