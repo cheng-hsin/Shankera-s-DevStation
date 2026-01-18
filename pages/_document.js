@@ -26,6 +26,12 @@ class MyDocument extends Document {
           <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
           <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
           <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
+          {/* Google AdSense */}
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1485399275405167"
+            crossOrigin="anonymous"
+          />
           <meta
             name="keywords"
             content="Shankera, DevOps, AWS, Kubernetes, Docker, Terraform, Ansible, CI/CD, 雲端架構, 容器化, 自動化部署"

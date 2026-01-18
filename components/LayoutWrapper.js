@@ -4,6 +4,7 @@ import Link from './Link'
 import SectionContainer from './SectionContainer'
 import Footer from './Footer'
 import MobileNav from './MobileNav'
+import { HeaderAd } from './GoogleAds'
 
 const LayoutWrapper = ({ children }) => {
   return (
@@ -39,6 +40,8 @@ const LayoutWrapper = ({ children }) => {
             </div>
           </div>
         </header>
+        {/* Header 廣告欄位 */}
+        <HeaderAd />
         <main className="mb-auto">{children}</main>
         <Footer />
       </div>
