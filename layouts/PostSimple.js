@@ -2,6 +2,7 @@ import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
 import SectionContainer from '@/components/SectionContainer'
 import { BlogSEO } from '@/components/SEO'
+import Breadcrumb from '@/components/Breadcrumb'
 import siteMetadata from '@/data/siteMetadata'
 import formatDate from '@/lib/utils/formatDate'
 import Comments from '@/components/comments'
@@ -14,6 +15,7 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
     <SectionContainer>
       <BlogSEO url={`${siteMetadata.siteUrl}/blog/${frontMatter.slug}`} {...frontMatter} />
       <ScrollTopAndComment />
+      <Breadcrumb />
       <div className="my-8 mx-auto max-w-7xl flex flex-col xl:flex-row gap-8 px-4 xl:px-0">
         <article className="kawaii-card flex-1 max-w-4xl p-4 xl:p-8">
           <div>

@@ -23,12 +23,19 @@ export default function Home({ posts }) {
           <div className="space-y-4 lg:col-span-3">
             {/* Welcome Banner */}
             <div className="kawaii-card p-6">
-              <h1 className="gradient-text mb-2 flex items-center gap-2 text-2xl font-bold">
-                <span className="sparkle">✨</span>
-                Latest Posts
-                <span className="sparkle">✨</span>
+              <h1 className="gradient-text mb-2 flex items-center text-2xl font-bold">
+                ✨<span>歡迎來到 Shankera's DevStation</span>✨
               </h1>
+              <p className="text-sm text-gray-600 mb-3">
+                👋 嗨！我是 <strong>Shankera</strong>，一位熱愛技術分享的 DevOps 工程師
+              </p>
               <p className="text-sm text-gray-600">{siteMetadata.description}</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">#Shankera</span>
+                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">#DevOps</span>
+                <span className="bg-green-100 text-green-700 px-2 py-1 rounded">#AWS</span>
+                <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">#Kubernetes</span>
+              </div>
             </div>
 
             {/* Posts Grid */}

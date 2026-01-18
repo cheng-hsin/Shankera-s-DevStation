@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://shankera-s-dev-station.vercel.app/sitemap.xml
+Sitemap: https://shankera-s-dev-station.vercel.app/feed.xml
+
+# Disallow admin pages
+Disallow: /admin
+Disallow: /manage-posts
+Disallow: /api/

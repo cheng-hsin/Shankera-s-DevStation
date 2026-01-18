@@ -1,9 +1,9 @@
 const siteMetadata = {
-  title: "Shankera's DevStation",
+  title: "Shankera's DevStation | Shankera 的 DevOps 技術部落格",
   author: 'Shankera Liang',
   headerTitle: "Shankera's DevStation",
   description:
-    "Explore DevOps, AWS cloud, and infrastructure automation at Shankera's DevStation. Tutorials on Kubernetes, Terraform, CI/CD, and security.",
+    'Shankera 的 DevOps 工程師技術部落格。Shankera 分享 AWS 雲端、Kubernetes、Docker、Terraform、Ansible、CI/CD 等技術教學與實戰經驗。跟著 Shankera 學習 DevOps 最佳實踐。',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://shankera-s-dev-station.vercel.app/',
@@ -11,12 +11,12 @@ const siteMetadata = {
   siteLogo: '/static/images/logo.png',
   image: '/static/images/avatar.png',
   socialBanner: '/static/images/twitter-card.png',
-  email: 'address@yoursite.com',
+  email: 'shankera.liang@example.com',
   github: 'https://github.com/cheng-hsin',
-  twitter: 'https://twitter.com/Twitter',
-  facebook: 'https://facebook.com',
-  youtube: 'https://youtube.com',
-  linkedin: 'https://www.linkedin.com',
+  twitter: 'https://twitter.com/shankera_dev',
+  facebook: 'https://facebook.com/shankera.dev',
+  youtube: 'https://youtube.com/@shankera-dev',
+  linkedin: 'https://www.linkedin.com/in/shankera-liang',
   locale: 'en-US',
   analytics: {
     // If you want to use an analytics provider you have to add it to the
@@ -25,7 +25,7 @@ const siteMetadata = {
     plausibleDataDomain: '', // e.g. tailwind-nextjs-starter-blog.vercel.app
     simpleAnalytics: false, // true or false
     umamiWebsiteId: '', // e.g. 123e4567-e89b-12d3-a456-426614174000
-    googleAnalyticsId: '', // e.g. UA-000000-2 or G-XXXXXXX
+    googleAnalyticsId: 'G-S6CN5K7C7M', // Google Analytics GA4 測量 ID
     posthogAnalyticsId: '', // posthog.init e.g. phc_5yXvArzvRdqtZIsHkEm3Fkkhm3d0bEYUXCaFISzqPSQ
   },
   newsletter: {
