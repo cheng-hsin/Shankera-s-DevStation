@@ -5,6 +5,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { getAllFilesFrontMatter } from '@/lib/mdx'
 import formatDate from '@/lib/utils/formatDate'
 import Sidebar from '@/components/Sidebar'
+import AdTest from '@/components/AdTest'
 
 const MAX_DISPLAY = 20
 
@@ -21,6 +22,9 @@ export default function Home({ posts }) {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
           {/* Main Content */}
           <div className="space-y-4 lg:col-span-3">
+            {/* AdSense Test */}
+            <AdTest />
+
             {/* Welcome Banner */}
             <div className="kawaii-card p-6">
               <h1 className="gradient-text mb-2 flex items-center text-2xl font-bold">

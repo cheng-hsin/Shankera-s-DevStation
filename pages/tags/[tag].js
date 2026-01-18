@@ -19,7 +19,7 @@ export async function getStaticPaths() {
         tag,
       },
     })),
-    fallback: false,
+    fallback: 'blocking',
   }
 }
 
@@ -28,6 +28,13 @@ export async function getStaticProps({ params }) {
   const filteredPosts = allPosts.filter(
     (post) => post.draft !== true && post.tags.map((t) => kebabCase(t)).includes(params.tag)
   )
+
+  // 如果沒有找到對應標籤的文章，返回 404
+  if (filteredPosts.length === 0) {
+    return {
+      notFound: true,
+    }
+  }
 
   // rss
   if (filteredPosts.length > 0) {
