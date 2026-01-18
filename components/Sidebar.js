@@ -1,4 +1,5 @@
 import Link from './Link'
+import Image from './Image'
 import { useMemo } from 'react'
 
 export default function Sidebar() {
@@ -66,9 +67,11 @@ export default function Sidebar() {
       <div className="kawaii-sidebar p-4">
         <div className="mb-3 text-center">
           <div className="border-3 float-icon mx-auto mb-2 h-16 w-16 overflow-hidden rounded-full border-purple-300">
-            <img
+            <Image
               src="/static/images/anpanman.png"
               alt="avatar"
+              width={64}
+              height={64}
               className="h-full w-full object-cover"
             />
           </div>

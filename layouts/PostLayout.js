@@ -4,6 +4,7 @@ import SectionContainer from '@/components/SectionContainer'
 import { BlogSEO } from '@/components/SEO'
 import Image from '@/components/Image'
 import Tag from '@/components/Tag'
+import Breadcrumb from '@/components/Breadcrumb'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/comments'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
@@ -27,6 +28,7 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
         {...frontMatter}
       />
       <ScrollTopAndComment />
+      <Breadcrumb />
       <div className="my-8 mx-auto max-w-7xl flex flex-col xl:flex-row gap-8 px-4 xl:px-0">
         <article className="kawaii-card flex-1 max-w-6xl p-4 xl:p-8">
           <div>
@@ -60,8 +62,8 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, chi
                             {author.avatar && (
                               <Image
                                 src={author.avatar}
-                                width="38px"
-                                height="38px"
+                                width={38}
+                                height={38}
                                 alt="avatar"
                                 className="h-10 w-10 rounded-full border-2 border-purple-300"
                               />
